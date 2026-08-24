@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink: #14161b;
+  --panel: #1c1f26;
+  --panel-2: #23262f;
+  --line: #33363f;
+  --text: #e8e6e1;
+  --text-dim: #9a9aa2;
+  --amber: #e8a33d;
+  --teal: #4fb6a8;
+  --coral: #e1604f;
+}
+
+html.light {
+  --ink: #f5f4f1;
+  --panel: #ffffff;
+  --panel-2: #edece8;
+  --line: #dcdad4;
+  --text: #1c1e22;
+  --text-dim: #6b6d73;
+  --amber: #c67f1e;
+  --teal: #1f8e7d;
+  --coral: #c23f2f;
+}
+
+html {
+  transition: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+.font-display {
+  font-family: 'Fraunces', serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
