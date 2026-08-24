@@ -173,10 +173,10 @@ export default function App() {
           title="Home"
         >
           <img
-            src="/favicon-32x32.png"
-            alt="Home"
-            className="w-5 h-5 object-contain"
-          />
+  src="./favicon-32x32.png"
+  alt="Home"
+  className="w-5 h-5 object-contain"
+/>
         </button>
 
         {TABS.map((t) => {
