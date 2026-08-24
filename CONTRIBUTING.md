@@ -1,12 +1,12 @@
-# Contributing to Desk
+# Contributing to Indexify
 
 Thanks for considering a contribution! This is a small, friendly project — no formal process required.
 
 ## Getting set up
 
 ```bash
-git clone https://github.com/your-username/desk.git
-cd desk
+git clone https://github.com/your-username/indexify.git
+cd indexify
 npm install
 npm run dev
 ```
