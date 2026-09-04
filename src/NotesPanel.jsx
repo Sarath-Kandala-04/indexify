@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2, Search } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 
@@ -6,10 +6,13 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
-export default function NotesPanel() {
+export default function NotesPanel({ pendingAction }) {
   const [notes, setNotes] = useLocalStorage('dashboard.notes', [])
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
+
+  const titleInputRef = useRef(null)
+  const lastHandledActionId = useRef(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -34,6 +37,8 @@ export default function NotesPanel() {
     }
     setNotes([note, ...notes])
     setActiveId(note.id)
+    // Focus the title field right after creating, so the user can type immediately.
+    requestAnimationFrame(() => titleInputRef.current?.focus())
   }
 
   function updateNote(id, patch) {
@@ -46,6 +51,15 @@ export default function NotesPanel() {
     setNotes(notes.filter((n) => n.id !== id))
     if (activeId === id) setActiveId(null)
   }
+
+  // Respond to the Ctrl+N shortcut dispatched from App.jsx.
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'new-note') return
+    if (lastHandledActionId.current === pendingAction.id) return
+    lastHandledActionId.current = pendingAction.id
+    createNote()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAction])
 
   return (
     <div className="flex h-full">
@@ -115,6 +129,7 @@ export default function NotesPanel() {
             </div>
             <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
               <input
+                ref={titleInputRef}
                 value={active.title}
                 onChange={(e) => updateNote(active.id, { title: e.target.value })}
                 placeholder="Untitled note"

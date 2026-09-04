@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 
@@ -21,12 +21,15 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export default function ExpensesPanel() {
+export default function ExpensesPanel({ pendingAction }) {
   const [expenses, setExpenses] = useLocalStorage('dashboard.expenses', [])
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState('Food')
   const [date, setDate] = useState(todayStr())
+
+  const amountInputRef = useRef(null)
+  const lastHandledActionId = useRef(null)
 
   const sorted = useMemo(
     () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt),
@@ -66,6 +69,16 @@ export default function ExpensesPanel() {
     setExpenses(expenses.filter((e) => e.id !== id))
   }
 
+  // Respond to the Ctrl+E shortcut dispatched from App.jsx.
+  // There's no "blank expense" concept today — addExpense() requires a
+  // positive amount — so the shortcut just focuses the amount field.
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'new-expense') return
+    if (lastHandledActionId.current === pendingAction.id) return
+    lastHandledActionId.current = pendingAction.id
+    amountInputRef.current?.focus()
+  }, [pendingAction])
+
   return (
     <div className="max-w-3xl mx-auto px-8 pt-20 pb-8 h-full overflow-y-auto">
       <div className="flex items-baseline justify-between mb-6">
@@ -84,6 +97,7 @@ export default function ExpensesPanel() {
 
       <form onSubmit={addExpense} className="flex flex-wrap gap-2 mb-6">
         <input
+          ref={amountInputRef}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Amount"

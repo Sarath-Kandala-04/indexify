@@ -10,6 +10,7 @@ Indexify is a desktop application built with React and Electron, designed to man
 - ✅ **Todos** — Keep track of tasks and things you need to get done.
 - 💰 **Expenses** — Track your personal expenses.
 - 🔄 **Subscriptions** — Keep track of recurring subscriptions.
+- ⌨️ **Keyboard shortcuts** — Ctrl+N (new note), Ctrl+T (add todo), Ctrl+E (add expense).
 - 📊 **Dashboard** — Get an overview of your personal information.
 - 💾 **Local storage** — Your data is stored locally on your computer.
 - 🖥️ **Desktop app** — Built for Windows using Electron.
@@ -19,11 +20,11 @@ Indexify is a desktop application built with React and Electron, designed to man
 
 The latest Windows installer is available from the GitHub Releases page.
 
-**Latest release:** [Indexify v1.0.0](../../releases/latest)
+**Latest release:** [Indexify v1.1.0](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
 
 Download:
 
-`Indexify Setup 1.0.0.exe`
+`Indexify Setup 1.1.0.exe`
 
 > Windows may display a security warning because the application is currently not code-signed.
 
@@ -50,31 +51,44 @@ Clone the repository:
 ```bash
 git clone https://github.com/Sarath-Kandala-04/indexify.git
 cd indexify
+```
 
 Install dependencies:
 
+```bash
 npm install
+```
 
 Start the development server:
 
+```bash
 npm run dev
-Build the Windows application
+```
+
+Build the Windows application:
+
+```bash
 npm run electron:build
+```
 
 The installer will be generated inside:
 
 release/
-📁 Project Structure
+
+## 📁 Project Structure
+
 indexify/
-├── electron/        # Electron main process
-├── public/          # Static assets and icons
-├── src/             # React application
-├── build/           # Application icon
-├── dist/            # Vite production build
-├── release/         # Generated installers (ignored by Git)
+├── electron/ # Electron main process
+├── public/ # Static assets and icons
+├── src/ # React application
+├── build/ # Application icon
+├── dist/ # Vite production build
+├── release/ # Generated installers (ignored by Git)
 ├── package.json
 └── vite.config.js
-💾 Data & Privacy
+
+
+## 💾 Data & Privacy
 
 Indexify currently stores application data locally using browser localStorage.
 
@@ -82,19 +96,19 @@ Your notes, todos, expenses, and subscriptions are not uploaded to a server by t
 
 Uninstalling and reinstalling Indexify does not necessarily remove the application's stored data because Electron's application data is stored separately from the installer.
 
-📌 Status
+## 📌 Status
 
-Version: 1.0.0
+**Version:** 1.1.0
 
 Indexify is currently a personal project and is actively being improved.
 
-🤝 Contributing
+## 🤝 Contributing
 
 Suggestions, bug reports, and contributions are welcome.
 
 Feel free to open an issue or submit a pull request.
 
-📄 License
+## 📄 License
 
 This project is licensed under the MIT License.
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 import {
   NotebookText,
@@ -44,6 +44,20 @@ const TABS = [
     accent: 'var(--teal)',
   },
 ]
+
+// Centralized shortcut map: Ctrl+<key> -> { tab to switch to, action type to dispatch }
+// Only actions that actually exist in the current panels are wired here.
+const SHORTCUTS = {
+  n: { tab: 'notes', action: 'new-note' },
+  t: { tab: 'todos', action: 'new-todo' },
+  e: { tab: 'expenses', action: 'new-expense' },
+}
+
+function isTypingTarget(el) {
+  if (!el) return false
+  const tag = el.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable
+}
 
 function SettingsMenu() {
   const [theme, setTheme] = useTheme()
@@ -155,6 +169,38 @@ function SettingsMenu() {
 export default function App() {
   const [tab, setTab] = useState('home')
 
+  // pendingAction is a one-shot signal for keyboard-triggered actions.
+  // { type: 'new-note' | 'new-todo' | 'new-expense', id: <unique> }
+  // The id changes on every dispatch so panels can detect a fresh trigger
+  // even if the same action type fires twice in a row.
+  const [pendingAction, setPendingAction] = useState(null)
+
+  const dispatchShortcut = useCallback((type) => {
+    setPendingAction({ type, id: Date.now() + Math.random() })
+  }, [])
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      // Only plain Ctrl+<key> combos — no Shift/Alt/Meta, so we don't
+      // hijack unrelated OS/browser combos like Ctrl+Shift+N.
+      if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
+
+      // Never intercept while the user is typing anywhere.
+      if (isTypingTarget(document.activeElement)) return
+
+      const key = e.key.toLowerCase()
+      const shortcut = SHORTCUTS[key]
+      if (!shortcut) return
+
+      e.preventDefault()
+      setTab(shortcut.tab)
+      dispatchShortcut(shortcut.action)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [dispatchShortcut])
+
   return (
     <div
       className="h-screen flex"
@@ -222,11 +268,11 @@ export default function App() {
 
         {tab === 'home' && <HomePanel goTo={setTab} />}
 
-        {tab === 'notes' && <NotesPanel />}
+        {tab === 'notes' && <NotesPanel pendingAction={pendingAction} />}
 
-        {tab === 'todos' && <TodosPanel />}
+        {tab === 'todos' && <TodosPanel pendingAction={pendingAction} />}
 
-        {tab === 'expenses' && <ExpensesPanel />}
+        {tab === 'expenses' && <ExpensesPanel pendingAction={pendingAction} />}
 
         {tab === 'subscriptions' && <SubscriptionsPanel />}
       </main>

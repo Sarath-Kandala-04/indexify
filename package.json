@@ -1,7 +1,7 @@
 {
   "name": "indexify",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Indexify — your personal dashboard for notes, todos, expenses, and subscriptions.",
   "author": "Sai Sarath Kandala",
   "type": "module",

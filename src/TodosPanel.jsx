@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2, Check } from 'lucide-react'
 import { useLocalStorage } from './useLocalStorage'
 
@@ -8,11 +8,14 @@ function uid() {
 
 const FILTERS = ['All', 'Active', 'Done']
 
-export default function TodosPanel() {
+export default function TodosPanel({ pendingAction }) {
   const [todos, setTodos] = useLocalStorage('dashboard.todos', [])
   const [text, setText] = useState('')
   const [priority, setPriority] = useState('normal')
   const [filter, setFilter] = useState('All')
+
+  const textInputRef = useRef(null)
+  const lastHandledActionId = useRef(null)
 
   const filtered = useMemo(() => {
     let list = todos
@@ -42,6 +45,16 @@ export default function TodosPanel() {
     setTodos(todos.filter((t) => t.id !== id))
   }
 
+  // Respond to the Ctrl+T shortcut dispatched from App.jsx.
+  // There's no "blank todo" concept today — addTodo() requires typed text —
+  // so the shortcut's job is just to get the user's cursor into the input.
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'new-todo') return
+    if (lastHandledActionId.current === pendingAction.id) return
+    lastHandledActionId.current = pendingAction.id
+    textInputRef.current?.focus()
+  }, [pendingAction])
+
   const priorityColor = { high: 'var(--teal)', normal: 'var(--teal)', low: 'var(--teal)' }
 
   return (
@@ -57,6 +70,7 @@ export default function TodosPanel() {
 
       <form onSubmit={addTodo} className="flex gap-2 mb-5">
         <input
+          ref={textInputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Add a task..."
