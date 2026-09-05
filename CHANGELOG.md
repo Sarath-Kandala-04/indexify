@@ -2,6 +2,27 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.4.0] - Pin / Favorites
+
+### Added
+- Pin/Unpin action on Notes, To-dos, Expenses, and Subscriptions (`isPinned` boolean, persisted via existing localStorage).
+- "Favorites" section on Home showing all pinned items across modules, each clearly labeled by type.
+- Clicking a favorite navigates to its module (Notes additionally opens the specific note).
+- Toast feedback on pin/unpin.
+
+### Notes
+- No changes needed to Recently Deleted — soft-delete already preserves and restores the complete item, including pin state.
+
+
+## [1.3.0] - Clear Completed To-dos
+
+### Added
+- "Clear Completed" action in To-dos, visible only when at least one to-do is completed.
+- Confirmation dialog before clearing.
+- Cleared to-dos are moved to Recently Deleted (not hard-deleted) via a new atomic `softDeleteMany`, fully restorable.
+- Toast feedback on success/failure.
+
+
 ## [1.2.0] - Recently Deleted
 
 ### Added

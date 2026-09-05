@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Check, CheckCheck, X } from 'lucide-react'
+import { Plus, Trash2, Check, CheckCheck, X, Pin, PinOff } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 
@@ -34,7 +34,7 @@ export default function TodosPanel({ pendingAction }) {
     e.preventDefault()
     if (!text.trim()) return
     setTodos([
-      { id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now() },
+      { id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now(), isPinned: false },
       ...todos,
     ])
     setText('')
@@ -43,6 +43,17 @@ export default function TodosPanel({ pendingAction }) {
 
   function toggle(id) {
     setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
+  }
+
+  function togglePin(id) {
+    const todo = todos.find((t) => t.id === id)
+    if (!todo) return
+    try {
+      setTodos(todos.map((t) => (t.id === id ? { ...t, isPinned: !t.isPinned } : t)))
+      showToast(!todo.isPinned ? 'Added to Favorites.' : 'Removed from Favorites.')
+    } catch {
+      showToast('Failed to update favorite. Please try again.')
+    }
   }
 
   function remove(id) {
@@ -189,6 +200,14 @@ export default function TodosPanel({ pendingAction }) {
             >
               {t.text}
             </span>
+            <button
+              onClick={() => togglePin(t.id)}
+              className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+              style={{ color: t.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+              title={t.isPinned ? 'Unpin' : 'Pin'}
+            >
+              {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+            </button>
             <button
               onClick={() => remove(t.id)}
               className="opacity-0 group-hover:opacity-100 transition-opacity"

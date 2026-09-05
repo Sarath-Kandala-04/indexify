@@ -1,13 +1,20 @@
 import { useMemo } from 'react'
-import { NotebookText, ListTodo, Wallet, ArrowRight } from 'lucide-react'
+import { NotebookText, ListTodo, Wallet, CreditCard, ArrowRight, Pin, Star } from 'lucide-react'
 import { useData } from './DataContext'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
+const FAVORITE_ICON = {
+  note: NotebookText,
+  todo: ListTodo,
+  expense: Wallet,
+  subscription: CreditCard,
+}
+
 export default function HomePanel({ goTo }) {
-  const { notes, todos, expenses } = useData()
+  const { notes, todos, expenses, subscriptions } = useData()
 
   const recentNotes = useMemo(
     () => [...notes].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3),
@@ -27,6 +34,32 @@ export default function HomePanel({ goTo }) {
   const monthCount = expenses.filter((e) => e.date.startsWith(thisMonthKey)).length
 
   const priorityColor = { high: 'var(--teal)', normal: 'var(--teal)', low: 'var(--teal)' }
+
+  const favorites = useMemo(() => {
+    const items = [
+      ...notes.filter((n) => n.isPinned).map((n) => ({
+        type: 'note', tab: 'notes', id: n.id, label: n.title || 'Untitled note',
+      })),
+      ...todos.filter((t) => t.isPinned).map((t) => ({
+        type: 'todo', tab: 'todos', id: t.id, label: t.text,
+      })),
+      ...expenses.filter((e) => e.isPinned).map((e) => ({
+        type: 'expense', tab: 'expenses', id: e.id, label: e.label,
+      })),
+      ...subscriptions.filter((s) => s.isPinned).map((s) => ({
+        type: 'subscription', tab: 'subscriptions', id: s.id, label: s.name,
+      })),
+    ]
+    return items
+  }, [notes, todos, expenses, subscriptions])
+
+  function openFavorite(fav) {
+    if (fav.type === 'note') {
+      goTo(fav.tab, { type: 'open-note', itemId: fav.id })
+    } else {
+      goTo(fav.tab)
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-8 pt-20 pb-8 h-full overflow-y-auto">
@@ -79,6 +112,49 @@ export default function HomePanel({ goTo }) {
             saved notes
           </div>
         </button>
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-center gap-1.5 mb-3">
+          <Star size={14} color="var(--teal)" />
+          <h3 className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+            Favorites
+          </h3>
+        </div>
+
+        {favorites.length === 0 ? (
+          <div
+            className="rounded-lg px-4 py-3"
+            style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+          >
+            <p className="text-sm" style={{ color: 'var(--text)' }}>
+              No favorites yet
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-dim)' }}>
+              Pin important items to access them quickly from Home.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {favorites.map((fav) => {
+              const Icon = FAVORITE_ICON[fav.type]
+              return (
+                <button
+                  key={`${fav.type}:${fav.id}`}
+                  onClick={() => openFavorite(fav)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors"
+                  style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+                >
+                  <Icon size={14} color="var(--teal)" className="shrink-0" />
+                  <span className="text-sm truncate flex-1" style={{ color: 'var(--text)' }}>
+                    {fav.label}
+                  </span>
+                  <Pin size={11} color="var(--text-dim)" className="shrink-0" />
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div className="mb-8">

@@ -9,6 +9,8 @@ import {
   CreditCard,
   Pause,
   Play,
+  Pin,
+  PinOff,
 } from 'lucide-react'
 
 import { useData } from './DataContext'
@@ -19,15 +21,7 @@ function uid() {
 }
 
 const CATEGORIES = [
-  'Entertainment',
-  'Software',
-  'Music',
-  'Gaming',
-  'Cloud Storage',
-  'Education',
-  'Fitness',
-  'News',
-  'Other',
+  'Entertainment', 'Software', 'Music', 'Gaming', 'Cloud Storage', 'Education', 'Fitness', 'News', 'Other',
 ]
 
 function formatCurrency(amount) {
@@ -58,13 +52,8 @@ function getDaysUntil(dateString) {
 
 function emptyForm() {
   return {
-    name: '',
-    amount: '',
-    billingCycle: 'monthly',
-    nextBillingDate: '',
-    category: 'Entertainment',
-    status: 'active',
-    notes: '',
+    name: '', amount: '', billingCycle: 'monthly', nextBillingDate: '',
+    category: 'Entertainment', status: 'active', notes: '',
   }
 }
 
@@ -79,7 +68,6 @@ export default function SubscriptionsPanel() {
   const [form, setForm] = useState(emptyForm())
 
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'active')
-
   const monthlyTotal = activeSubscriptions.reduce((total, s) => total + getMonthlyCost(s), 0)
   const yearlyTotal = activeSubscriptions.reduce((total, s) => total + getYearlyCost(s), 0)
 
@@ -149,10 +137,22 @@ export default function SubscriptionsPanel() {
         notes: form.notes,
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        isPinned: false,
       }
       setSubscriptions([subscription, ...subscriptions])
     }
     closeForm()
+  }
+
+  function togglePin(id) {
+    const subscription = subscriptions.find((s) => s.id === id)
+    if (!subscription) return
+    try {
+      setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, isPinned: !s.isPinned } : s)))
+      showToast(!subscription.isPinned ? 'Added to Favorites.' : 'Removed from Favorites.')
+    } catch {
+      showToast('Failed to update favorite. Please try again.')
+    }
   }
 
   function deleteSubscription(id) {
@@ -176,9 +176,7 @@ export default function SubscriptionsPanel() {
   function toggleStatus(id) {
     setSubscriptions(
       subscriptions.map((s) =>
-        s.id === id
-          ? { ...s, status: s.status === 'active' ? 'paused' : 'active', updatedAt: Date.now() }
-          : s
+        s.id === id ? { ...s, status: s.status === 'active' ? 'paused' : 'active', updatedAt: Date.now() } : s
       )
     )
   }
@@ -303,6 +301,7 @@ export default function SubscriptionsPanel() {
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
+                            {subscription.isPinned && <Pin size={12} color="var(--teal)" />}
                             <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>
                               {subscription.name}
                             </h3>
@@ -338,9 +337,7 @@ export default function SubscriptionsPanel() {
                         <span className="truncate text-xs" style={{ color: 'var(--text-dim)' }}>
                           Next payment:{' '}
                           {new Date(subscription.nextBillingDate).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
+                            day: 'numeric', month: 'short', year: 'numeric',
                           })}
                         </span>
                         <span
@@ -352,6 +349,15 @@ export default function SubscriptionsPanel() {
                       </div>
 
                       <div className="ml-3 flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={() => togglePin(subscription.id)}
+                          className="rounded-md p-2 transition-colors"
+                          title={subscription.isPinned ? 'Unpin' : 'Pin'}
+                          style={{ color: subscription.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+                        >
+                          {subscription.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+                        </button>
+
                         <button
                           onClick={() => toggleStatus(subscription.id)}
                           className="rounded-md p-2 transition-colors"

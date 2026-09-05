@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Pin, PinOff } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 
@@ -60,11 +60,22 @@ export default function ExpensesPanel({ pendingAction }) {
     const value = parseFloat(amount)
     if (!value || value <= 0) return
     setExpenses([
-      { id: uid(), amount: value, label: label.trim() || category, category, date, createdAt: Date.now() },
+      { id: uid(), amount: value, label: label.trim() || category, category, date, createdAt: Date.now(), isPinned: false },
       ...expenses,
     ])
     setAmount('')
     setLabel('')
+  }
+
+  function togglePin(id) {
+    const expense = expenses.find((e) => e.id === id)
+    if (!expense) return
+    try {
+      setExpenses(expenses.map((e) => (e.id === id ? { ...e, isPinned: !e.isPinned } : e)))
+      showToast(!expense.isPinned ? 'Added to Favorites.' : 'Removed from Favorites.')
+    } catch {
+      showToast('Failed to update favorite. Please try again.')
+    }
   }
 
   function remove(id) {
@@ -197,6 +208,14 @@ export default function ExpensesPanel({ pendingAction }) {
             <span className="text-sm font-mono w-20 text-right" style={{ color: 'var(--text)' }}>
               ₹{e.amount.toFixed(2)}
             </span>
+            <button
+              onClick={() => togglePin(e.id)}
+              className={e.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+              style={{ color: e.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+              title={e.isPinned ? 'Unpin' : 'Pin'}
+            >
+              {e.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+            </button>
             <button
               onClick={() => remove(e.id)}
               className="opacity-0 group-hover:opacity-100 transition-opacity"

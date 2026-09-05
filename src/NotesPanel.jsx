@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Search } from 'lucide-react'
+import { Plus, Trash2, Search, Pin, PinOff } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 
@@ -14,7 +14,8 @@ export default function NotesPanel({ pendingAction }) {
   const [query, setQuery] = useState('')
 
   const titleInputRef = useRef(null)
-  const lastHandledActionId = useRef(null)
+  const lastHandledNewId = useRef(null)
+  const lastHandledOpenId = useRef(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -29,7 +30,7 @@ export default function NotesPanel({ pendingAction }) {
   const active = notes.find((n) => n.id === activeId) || null
 
   function createNote() {
-    const note = { id: uid(), title: 'Untitled note', body: '', updatedAt: Date.now() }
+    const note = { id: uid(), title: 'Untitled note', body: '', updatedAt: Date.now(), isPinned: false }
     setNotes([note, ...notes])
     setActiveId(note.id)
     requestAnimationFrame(() => titleInputRef.current?.focus())
@@ -37,6 +38,17 @@ export default function NotesPanel({ pendingAction }) {
 
   function updateNote(id, patch) {
     setNotes(notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)))
+  }
+
+  function togglePin(id) {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    try {
+      setNotes(notes.map((n) => (n.id === id ? { ...n, isPinned: !n.isPinned } : n)))
+      showToast(!note.isPinned ? 'Added to Favorites.' : 'Removed from Favorites.')
+    } catch {
+      showToast('Failed to update favorite. Please try again.')
+    }
   }
 
   function deleteNote(id) {
@@ -58,12 +70,21 @@ export default function NotesPanel({ pendingAction }) {
     })
   }
 
+  // v1.1.0 shortcut: Ctrl+N
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'new-note') return
-    if (lastHandledActionId.current === pendingAction.id) return
-    lastHandledActionId.current = pendingAction.id
+    if (lastHandledNewId.current === pendingAction.id) return
+    lastHandledNewId.current = pendingAction.id
     createNote()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAction])
+
+  // v1.4.0: clicking a pinned note on Home opens it here.
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'open-note') return
+    if (lastHandledOpenId.current === pendingAction.id) return
+    lastHandledOpenId.current = pendingAction.id
+    setActiveId(pendingAction.itemId)
   }, [pendingAction])
 
   return (
@@ -104,8 +125,11 @@ export default function NotesPanel({ pendingAction }) {
               className="w-full text-left px-3 py-2.5 rounded-md mb-1 transition-colors"
               style={{ background: activeId === n.id ? 'var(--panel-2)' : 'transparent' }}
             >
-              <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
-                {n.title || 'Untitled note'}
+              <div className="flex items-center gap-1.5">
+                {n.isPinned && <Pin size={11} color="var(--teal)" />}
+                <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
+                  {n.title || 'Untitled note'}
+                </div>
               </div>
               <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-dim)' }}>
                 {n.body ? n.body.slice(0, 60) : 'No content'}
@@ -122,13 +146,24 @@ export default function NotesPanel({ pendingAction }) {
               <span className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>
                 Edited {new Date(active.updatedAt).toLocaleString()}
               </span>
-              <button
-                onClick={() => deleteNote(active.id)}
-                className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                style={{ color: 'var(--teal)' }}
-              >
-                <Trash2 size={14} /> Delete
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => togglePin(active.id)}
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
+                  style={{ color: active.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+                  title={active.isPinned ? 'Unpin' : 'Pin'}
+                >
+                  {active.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+                  {active.isPinned ? 'Unpin' : 'Pin'}
+                </button>
+                <button
+                  onClick={() => deleteNote(active.id)}
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
+                  style={{ color: 'var(--teal)' }}
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
               <input

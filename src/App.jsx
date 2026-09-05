@@ -27,7 +27,6 @@ const TABS = [
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, accent: 'var(--teal)' },
 ]
 
-// v1.1.0 shortcuts — unchanged.
 const SHORTCUTS = {
   n: { tab: 'notes', action: 'new-note' },
   t: { tab: 'todos', action: 'new-todo' },
@@ -151,6 +150,16 @@ export default function App() {
     setPendingAction({ type, id: Date.now() + Math.random() })
   }, [])
 
+  // Extended navigation used by Home's Favorites: switches tab, and
+  // optionally dispatches a pendingAction so the destination panel can
+  // open/select the specific item (currently only Notes acts on this).
+  const goToItem = useCallback((tabId, action) => {
+    setTab(tabId)
+    if (action) {
+      setPendingAction({ ...action, id: Date.now() + Math.random() })
+    }
+  }, [])
+
   useEffect(() => {
     function handleKeyDown(e) {
       if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
@@ -211,7 +220,6 @@ export default function App() {
 
         <div className="flex-1" />
 
-        {/* Recently Deleted — placed directly above Settings */}
         <button
           onClick={() => setTab('deleted')}
           title="Recently Deleted"
@@ -237,7 +245,7 @@ export default function App() {
           <Clock />
         </div>
 
-        {tab === 'home' && <HomePanel goTo={setTab} />}
+        {tab === 'home' && <HomePanel goTo={goToItem} />}
         {tab === 'notes' && <NotesPanel pendingAction={pendingAction} />}
         {tab === 'todos' && <TodosPanel pendingAction={pendingAction} />}
         {tab === 'expenses' && <ExpensesPanel pendingAction={pendingAction} />}
