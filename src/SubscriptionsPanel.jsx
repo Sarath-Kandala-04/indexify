@@ -197,7 +197,7 @@ export default function SubscriptionsPanel() {
           <button
             onClick={openNewForm}
             className="flex shrink-0 items-center gap-2 rounded-md px-5 py-2 text-sm font-medium transition-colors"
-            style={{ background: 'var(--teal)', color: '#0d1210' }}
+            style={{ background: 'var(--accent)', color: '#0d1210' }}
           >
             <Plus size={15} />
             Add subscription
@@ -218,7 +218,7 @@ export default function SubscriptionsPanel() {
             <div className="text-[11px]" style={{ color: 'var(--text-dim)' }}>
               Monthly cost
             </div>
-            <div className="mt-1 text-xl font-semibold" style={{ color: 'var(--teal)' }}>
+            <div className="mt-1 text-xl font-semibold" style={{ color: 'var(--accent)' }}>
               {formatCurrency(monthlyTotal)}
             </div>
           </div>
@@ -269,7 +269,7 @@ export default function SubscriptionsPanel() {
                   {subscriptions.length === 0 ? 'No subscriptions yet.' : 'Nothing matches your search.'}
                 </p>
                 {subscriptions.length === 0 && (
-                  <button onClick={openNewForm} className="mt-4 text-sm" style={{ color: 'var(--teal)' }}>
+                  <button onClick={openNewForm} className="mt-4 text-sm" style={{ color: 'var(--accent)' }}>
                     Add your first subscription
                   </button>
                 )}
@@ -296,12 +296,12 @@ export default function SubscriptionsPanel() {
                           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md"
                           style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
                         >
-                          <CreditCard size={18} color="var(--teal)" />
+                          <CreditCard size={18} color="var(--accent)" />
                         </div>
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            {subscription.isPinned && <Pin size={12} color="var(--teal)" />}
+                            {subscription.isPinned && <Pin size={12} color="var(--accent)" />}
                             <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>
                               {subscription.name}
                             </h3>
@@ -353,7 +353,7 @@ export default function SubscriptionsPanel() {
                           onClick={() => togglePin(subscription.id)}
                           className="rounded-md p-2 transition-colors"
                           title={subscription.isPinned ? 'Unpin' : 'Pin'}
-                          style={{ color: subscription.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+                          style={{ color: subscription.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
                         >
                           {subscription.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
                         </button>
@@ -536,7 +536,7 @@ export default function SubscriptionsPanel() {
                 <button
                   type="submit"
                   className="rounded-md px-4 py-2 text-sm font-medium"
-                  style={{ background: 'var(--teal)', color: '#0d1210' }}
+                  style={{ background: 'var(--accent)', color: '#0d1210' }}
                 >
                   {editingId ? 'Save changes' : 'Add subscription'}
                 </button>

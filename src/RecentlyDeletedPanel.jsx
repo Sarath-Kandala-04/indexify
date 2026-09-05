@@ -27,16 +27,14 @@ function itemName(entry) {
 
 function formatDeletedAt(ts) {
   return `Deleted ${new Date(ts).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+    month: 'short', day: 'numeric', year: 'numeric',
   })}`
 }
 
 export default function RecentlyDeletedPanel() {
   const { deleted, restoreItem, permanentlyDeleteItem, emptyDeleted } = useData()
   const { showToast } = useToast()
-  const [confirmAction, setConfirmAction] = useState(null) // { type: 'permanent', id } | { type: 'empty' }
+  const [confirmAction, setConfirmAction] = useState(null)
 
   const sorted = useMemo(
     () => [...deleted].sort((a, b) => b.deletedAt - a.deletedAt),
@@ -118,7 +116,7 @@ export default function RecentlyDeletedPanel() {
             <button
               onClick={() => handleRestore(entry)}
               className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md"
-              style={{ color: 'var(--teal)' }}
+              style={{ color: 'var(--accent)' }}
             >
               <RotateCcw size={14} /> Restore
             </button>

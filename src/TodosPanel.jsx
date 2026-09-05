@@ -95,7 +95,7 @@ export default function TodosPanel({ pendingAction }) {
     textInputRef.current?.focus()
   }, [pendingAction])
 
-  const priorityColor = { high: 'var(--teal)', normal: 'var(--teal)', low: 'var(--teal)' }
+  const priorityColor = { high: 'var(--accent)', normal: 'var(--accent)', low: 'var(--accent)' }
 
   return (
     <div className="max-w-2xl mx-auto px-8 pt-20 pb-8 h-full overflow-y-auto">
@@ -130,7 +130,7 @@ export default function TodosPanel({ pendingAction }) {
         <button
           type="submit"
           className="flex items-center gap-1.5 rounded-md px-3 text-sm font-medium"
-          style={{ background: 'var(--teal)', color: '#0d1210' }}
+          style={{ background: 'var(--accent)', color: '#0d1210' }}
         >
           <Plus size={16} /> Add
         </button>
@@ -181,8 +181,8 @@ export default function TodosPanel({ pendingAction }) {
               onClick={() => toggle(t.id)}
               className="w-5 h-5 shrink-0 rounded flex items-center justify-center transition-colors"
               style={{
-                border: `1.5px solid ${t.done ? 'var(--teal)' : 'var(--line)'}`,
-                background: t.done ? 'var(--teal)' : 'transparent',
+                border: `1.5px solid ${t.done ? 'var(--accent)' : 'var(--line)'}`,
+                background: t.done ? 'var(--accent)' : 'transparent',
               }}
             >
               {t.done && <Check size={13} color="#0d1210" />}
@@ -203,7 +203,7 @@ export default function TodosPanel({ pendingAction }) {
             <button
               onClick={() => togglePin(t.id)}
               className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-              style={{ color: t.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+              style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
               title={t.isPinned ? 'Unpin' : 'Pin'}
             >
               {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}

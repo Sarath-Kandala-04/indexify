@@ -2,6 +2,20 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.5.0] - Accent Colors
+
+### Added
+- Accent Color picker in Settings: Teal (Default), Blue, Purple, Green, Orange, Pink, Red.
+- Accent applies live, across both Dark and Light themes, without restart or reload.
+- Persisted via `dashboard.accent` in localStorage.
+
+### Changed
+- All primary-accent UI (active sidebar item, primary buttons, focus outline, pin/priority indicators, restore action) now reads from a single `--accent` CSS variable instead of a hardcoded teal, so it follows the selected accent everywhere it previously used teal.
+- Neutral surfaces (backgrounds, borders, text, expense category colors) are untouched.
+
+### Notes
+- Existing users default to Teal automatically — no visual change unless they explicitly pick a new accent.
+
 ## [1.4.0] - Pin / Favorites
 
 ### Added

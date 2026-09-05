@@ -33,10 +33,10 @@ export default function HomePanel({ goTo }) {
     .reduce((sum, e) => sum + e.amount, 0)
   const monthCount = expenses.filter((e) => e.date.startsWith(thisMonthKey)).length
 
-  const priorityColor = { high: 'var(--teal)', normal: 'var(--teal)', low: 'var(--teal)' }
+  const priorityColor = { high: 'var(--accent)', normal: 'var(--accent)', low: 'var(--accent)' }
 
   const favorites = useMemo(() => {
-    const items = [
+    return [
       ...notes.filter((n) => n.isPinned).map((n) => ({
         type: 'note', tab: 'notes', id: n.id, label: n.title || 'Untitled note',
       })),
@@ -50,7 +50,6 @@ export default function HomePanel({ goTo }) {
         type: 'subscription', tab: 'subscriptions', id: s.id, label: s.name,
       })),
     ]
-    return items
   }, [notes, todos, expenses, subscriptions])
 
   function openFavorite(fav) {
@@ -76,7 +75,7 @@ export default function HomePanel({ goTo }) {
           className="text-left p-4 rounded-lg transition-colors"
           style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
         >
-          <ListTodo size={18} color="var(--teal)" />
+          <ListTodo size={18} color="var(--accent)" />
           <div className="font-mono text-2xl mt-2" style={{ color: 'var(--text)' }}>
             {openCount}
           </div>
@@ -90,7 +89,7 @@ export default function HomePanel({ goTo }) {
           className="text-left p-4 rounded-lg transition-colors"
           style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
         >
-          <Wallet size={18} color="var(--teal)" />
+          <Wallet size={18} color="var(--accent)" />
           <div className="font-mono text-2xl mt-2" style={{ color: 'var(--text)' }}>
             ₹{monthTotal.toFixed(0)}
           </div>
@@ -104,7 +103,7 @@ export default function HomePanel({ goTo }) {
           className="text-left p-4 rounded-lg transition-colors"
           style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
         >
-          <NotebookText size={18} color="var(--teal)" />
+          <NotebookText size={18} color="var(--accent)" />
           <div className="font-mono text-2xl mt-2" style={{ color: 'var(--text)' }}>
             {notes.length}
           </div>
@@ -116,7 +115,7 @@ export default function HomePanel({ goTo }) {
 
       <div className="mb-8">
         <div className="flex items-center gap-1.5 mb-3">
-          <Star size={14} color="var(--teal)" />
+          <Star size={14} color="var(--accent)" />
           <h3 className="text-sm font-medium" style={{ color: 'var(--text)' }}>
             Favorites
           </h3>
@@ -145,7 +144,7 @@ export default function HomePanel({ goTo }) {
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors"
                   style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
                 >
-                  <Icon size={14} color="var(--teal)" className="shrink-0" />
+                  <Icon size={14} color="var(--accent)" className="shrink-0" />
                   <span className="text-sm truncate flex-1" style={{ color: 'var(--text)' }}>
                     {fav.label}
                   </span>

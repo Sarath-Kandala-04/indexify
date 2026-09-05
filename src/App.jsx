@@ -19,12 +19,14 @@ import SubscriptionsPanel from './SubscriptionsPanel'
 import RecentlyDeletedPanel from './RecentlyDeletedPanel'
 import Clock from './Clock'
 import { useTheme } from './useTheme'
+import { useAccent, ACCENT_OPTIONS } from './useAccent'
+import { useToast } from './ToastContext'
 
 const TABS = [
-  { id: 'notes', label: 'Notes', icon: NotebookText, accent: 'var(--teal)' },
-  { id: 'todos', label: 'To-dos', icon: ListTodo, accent: 'var(--teal)' },
-  { id: 'expenses', label: 'Expenses', icon: Wallet, accent: 'var(--teal)' },
-  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, accent: 'var(--teal)' },
+  { id: 'notes', label: 'Notes', icon: NotebookText },
+  { id: 'todos', label: 'To-dos', icon: ListTodo },
+  { id: 'expenses', label: 'Expenses', icon: Wallet },
+  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
 ]
 
 const SHORTCUTS = {
@@ -39,22 +41,52 @@ function isTypingTarget(el) {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable
 }
 
+// Small swatch preview used both in the closed control and the option list.
+function AccentSwatch({ accentId, size = 12 }) {
+  return (
+    <span
+      className="rounded-full shrink-0"
+      style={{
+        width: size,
+        height: size,
+        background: `var(--accent-${accentId})`,
+        display: 'inline-block',
+      }}
+    />
+  )
+}
+
 function SettingsMenu() {
   const [theme, setTheme] = useTheme()
+  const [accent, setAccent] = useAccent()
+  const { showToast } = useToast()
   const [open, setOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
+  const [accentOpen, setAccentOpen] = useState(false)
   const wrapperRef = useRef(null)
+
+  const currentAccentLabel = ACCENT_OPTIONS.find((a) => a.id === accent)?.label || 'Teal (Default)'
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         setOpen(false)
         setThemeOpen(false)
+        setAccentOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  function selectAccent(id) {
+    try {
+      setAccent(id)
+      setAccentOpen(false)
+    } catch {
+      showToast('Failed to save accent color. Please try again.')
+    }
+  }
 
   return (
     <div className="relative" ref={wrapperRef}>
@@ -77,7 +109,10 @@ function SettingsMenu() {
 
             <button
               type="button"
-              onClick={() => setThemeOpen((v) => !v)}
+              onClick={() => {
+                setThemeOpen((v) => !v)
+                setAccentOpen(false)
+              }}
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
               style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
             >
@@ -97,13 +132,10 @@ function SettingsMenu() {
                     setThemeOpen(false)
                   }}
                   className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs"
-                  style={{
-                    background: theme === 'dark' ? 'var(--panel-2)' : 'transparent',
-                    color: 'var(--text)',
-                  }}
+                  style={{ background: theme === 'dark' ? 'var(--panel-2)' : 'transparent', color: 'var(--text)' }}
                 >
                   Dark
-                  {theme === 'dark' && <Check size={12} color="var(--teal)" />}
+                  {theme === 'dark' && <Check size={12} color="var(--accent)" />}
                 </button>
 
                 <button
@@ -113,14 +145,55 @@ function SettingsMenu() {
                     setThemeOpen(false)
                   }}
                   className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs"
-                  style={{
-                    background: theme === 'light' ? 'var(--panel-2)' : 'transparent',
-                    color: 'var(--text)',
-                  }}
+                  style={{ background: theme === 'light' ? 'var(--panel-2)' : 'transparent', color: 'var(--text)' }}
                 >
                   Light
-                  {theme === 'light' && <Check size={12} color="var(--teal)" />}
+                  {theme === 'light' && <Check size={12} color="var(--accent)" />}
                 </button>
+              </div>
+            )}
+          </div>
+
+          <div className="relative flex items-center justify-between gap-3 px-2 py-1.5">
+            <span className="text-sm" style={{ color: 'var(--text)' }}>
+              Accent Color
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAccentOpen((v) => !v)
+                setThemeOpen(false)
+              }}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
+              style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
+            >
+              <AccentSwatch accentId={accent} />
+              {currentAccentLabel}
+              <ChevronDown size={13} />
+            </button>
+
+            {accentOpen && (
+              <div
+                className="absolute top-full right-0 mt-1 w-40 rounded-md p-1 shadow-lg z-20 max-h-64 overflow-y-auto"
+                style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+              >
+                {ACCENT_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => selectAccent(option.id)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs"
+                    style={{
+                      background: accent === option.id ? 'var(--panel-2)' : 'transparent',
+                      color: 'var(--text)',
+                    }}
+                  >
+                    <AccentSwatch accentId={option.id} />
+                    <span className="flex-1 text-left">{option.label}</span>
+                    {accent === option.id && <Check size={12} color="var(--accent)" />}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -131,12 +204,13 @@ function SettingsMenu() {
         onClick={() => {
           setOpen((v) => !v)
           setThemeOpen(false)
+          setAccentOpen(false)
         }}
         title="Settings"
         className="w-11 h-11 rounded-md flex items-center justify-center transition-colors"
         style={{ background: open ? 'var(--panel-2)' : 'transparent' }}
       >
-        <Settings size={19} color={open ? 'var(--teal)' : 'var(--text-dim)'} />
+        <Settings size={19} color={open ? 'var(--accent)' : 'var(--text-dim)'} />
       </button>
     </div>
   )
@@ -146,13 +220,13 @@ export default function App() {
   const [tab, setTab] = useState('home')
   const [pendingAction, setPendingAction] = useState(null)
 
+  // Applies the persisted accent as soon as the app mounts.
+  useAccent()
+
   const dispatchShortcut = useCallback((type) => {
     setPendingAction({ type, id: Date.now() + Math.random() })
   }, [])
 
-  // Extended navigation used by Home's Favorites: switches tab, and
-  // optionally dispatches a pendingAction so the destination panel can
-  // open/select the specific item (currently only Notes acts on this).
   const goToItem = useCallback((tabId, action) => {
     setTab(tabId)
     if (action) {
@@ -210,10 +284,10 @@ export default function App() {
               {isActive && (
                 <span
                   className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full"
-                  style={{ background: t.accent }}
+                  style={{ background: 'var(--accent)' }}
                 />
               )}
-              <Icon size={19} color={isActive ? t.accent : 'var(--text-dim)'} />
+              <Icon size={19} color={isActive ? 'var(--accent)' : 'var(--text-dim)'} />
             </button>
           )
         })}
@@ -231,10 +305,10 @@ export default function App() {
           {tab === 'deleted' && (
             <span
               className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full"
-              style={{ background: 'var(--teal)' }}
+              style={{ background: 'var(--accent)' }}
             />
           )}
-          <Trash2 size={19} color={tab === 'deleted' ? 'var(--teal)' : 'var(--text-dim)'} />
+          <Trash2 size={19} color={tab === 'deleted' ? 'var(--accent)' : 'var(--text-dim)'} />
         </button>
 
         <SettingsMenu />

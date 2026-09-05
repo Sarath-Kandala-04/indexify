@@ -113,7 +113,7 @@ export default function ExpensesPanel({ pendingAction }) {
           <div className="text-xs" style={{ color: 'var(--text-dim)' }}>
             This month
           </div>
-          <div className="font-mono text-xl" style={{ color: 'var(--teal)' }}>
+          <div className="font-mono text-xl" style={{ color: 'var(--accent)' }}>
             ₹{monthTotal.toFixed(2)}
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function ExpensesPanel({ pendingAction }) {
         <button
           type="submit"
           className="flex items-center gap-1.5 rounded-md px-3 text-sm font-medium"
-          style={{ background: 'var(--teal)', color: '#0d1210' }}
+          style={{ background: 'var(--accent)', color: '#0d1210' }}
         >
           <Plus size={16} /> Add
         </button>
@@ -211,7 +211,7 @@ export default function ExpensesPanel({ pendingAction }) {
             <button
               onClick={() => togglePin(e.id)}
               className={e.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-              style={{ color: e.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+              style={{ color: e.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
               title={e.isPinned ? 'Unpin' : 'Pin'}
             >
               {e.isPinned ? <PinOff size={14} /> : <Pin size={14} />}

@@ -11,6 +11,16 @@
   --amber: #e8a33d;
   --teal: #4fb6a8;
   --coral: #e1604f;
+
+  /* Accent palette (dark theme values) */
+  --accent-teal: #4fb6a8;
+  --accent-blue: #5b9bd5;
+  --accent-purple: #a78bfa;
+  --accent-green: #5fbf7a;
+  --accent-orange: #e8a33d;
+  --accent-pink: #e07bb0;
+  --accent-red: #e1604f;
+  --accent: var(--accent-teal);
 }
 
 html.light {
@@ -23,7 +33,24 @@ html.light {
   --amber: #c67f1e;
   --teal: #1f8e7d;
   --coral: #c23f2f;
+
+  /* Accent palette (light theme values — same named colors, tuned for contrast) */
+  --accent-teal: #1f8e7d;
+  --accent-blue: #1f6fb2;
+  --accent-purple: #7c4fd1;
+  --accent-green: #2f8f4e;
+  --accent-orange: #c67f1e;
+  --accent-pink: #c14f8c;
+  --accent-red: #c23f2f;
 }
+
+/* Selected accent overrides --accent; falls through to --accent-teal by default */
+html[data-accent="blue"] { --accent: var(--accent-blue); }
+html[data-accent="purple"] { --accent: var(--accent-purple); }
+html[data-accent="green"] { --accent: var(--accent-green); }
+html[data-accent="orange"] { --accent: var(--accent-orange); }
+html[data-accent="pink"] { --accent: var(--accent-pink); }
+html[data-accent="red"] { --accent: var(--accent-red); }
 
 html {
   transition: none;
@@ -58,6 +85,6 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

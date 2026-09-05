@@ -70,7 +70,6 @@ export default function NotesPanel({ pendingAction }) {
     })
   }
 
-  // v1.1.0 shortcut: Ctrl+N
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'new-note') return
     if (lastHandledNewId.current === pendingAction.id) return
@@ -79,7 +78,6 @@ export default function NotesPanel({ pendingAction }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingAction])
 
-  // v1.4.0: clicking a pinned note on Home opens it here.
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'open-note') return
     if (lastHandledOpenId.current === pendingAction.id) return
@@ -94,7 +92,7 @@ export default function NotesPanel({ pendingAction }) {
           <button
             onClick={createNote}
             className="flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors"
-            style={{ background: 'var(--teal)', color: '#0d1210' }}
+            style={{ background: 'var(--accent)', color: '#0d1210' }}
           >
             <Plus size={16} /> New note
           </button>
@@ -126,7 +124,7 @@ export default function NotesPanel({ pendingAction }) {
               style={{ background: activeId === n.id ? 'var(--panel-2)' : 'transparent' }}
             >
               <div className="flex items-center gap-1.5">
-                {n.isPinned && <Pin size={11} color="var(--teal)" />}
+                {n.isPinned && <Pin size={11} color="var(--accent)" />}
                 <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
                   {n.title || 'Untitled note'}
                 </div>
@@ -150,7 +148,7 @@ export default function NotesPanel({ pendingAction }) {
                 <button
                   onClick={() => togglePin(active.id)}
                   className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                  style={{ color: active.isPinned ? 'var(--teal)' : 'var(--text-dim)' }}
+                  style={{ color: active.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
                   title={active.isPinned ? 'Unpin' : 'Pin'}
                 >
                   {active.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
@@ -159,7 +157,7 @@ export default function NotesPanel({ pendingAction }) {
                 <button
                   onClick={() => deleteNote(active.id)}
                   className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                  style={{ color: 'var(--teal)' }}
+                  style={{ color: 'var(--accent)' }}
                 >
                   <Trash2 size={14} /> Delete
                 </button>
