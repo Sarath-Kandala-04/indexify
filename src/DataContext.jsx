@@ -17,8 +17,6 @@ export function DataProvider({ children }) {
     subscription: [subscriptions, setSubscriptions],
   }
 
-  // Moves an item out of its module and into Recently Deleted.
-  // Returns the deleted-entry id (needed for Undo), or null if something failed.
   function softDelete(type, item) {
     const target = collections[type]
     if (!target || !item) return null
@@ -38,7 +36,30 @@ export function DataProvider({ children }) {
     }
   }
 
-  // Returns a deleted item to its original module, preserving its original id/data.
+  // Batch version — moves multiple items from the same module to Recently
+  // Deleted in a single atomic update. Needed anywhere more than one item
+  // can be removed in the same action (e.g. Clear Completed To-dos), since
+  // calling softDelete() in a loop would read stale state on each iteration.
+  function softDeleteMany(type, items) {
+    const target = collections[type]
+    if (!target || !items || items.length === 0) return []
+    const [list, setList] = target
+    try {
+      const idsToRemove = new Set(items.map((i) => i.id))
+      const deletedEntries = items.map((item) => ({
+        id: `${type}:${item.id}`,
+        type,
+        data: item,
+        deletedAt: Date.now(),
+      }))
+      setList(list.filter((i) => !idsToRemove.has(i.id)))
+      setDeleted([...deletedEntries, ...deleted])
+      return deletedEntries.map((e) => e.id)
+    } catch {
+      return []
+    }
+  }
+
   function restoreItem(deletedId) {
     const entry = deleted.find((d) => d.id === deletedId)
     if (!entry) return false
@@ -79,6 +100,7 @@ export function DataProvider({ children }) {
     subscriptions, setSubscriptions,
     deleted,
     softDelete,
+    softDeleteMany,
     restoreItem,
     permanentlyDeleteItem,
     emptyDeleted,

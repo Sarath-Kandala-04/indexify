@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Check } from 'lucide-react'
+import { Plus, Trash2, Check, CheckCheck, X } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 
@@ -10,11 +10,12 @@ function uid() {
 const FILTERS = ['All', 'Active', 'Done']
 
 export default function TodosPanel({ pendingAction }) {
-  const { todos, setTodos, softDelete, restoreItem } = useData()
+  const { todos, setTodos, softDelete, softDeleteMany, restoreItem } = useData()
   const { showToast } = useToast()
   const [text, setText] = useState('')
   const [priority, setPriority] = useState('normal')
   const [filter, setFilter] = useState('All')
+  const [confirmClear, setConfirmClear] = useState(false)
 
   const textInputRef = useRef(null)
   const lastHandledActionId = useRef(null)
@@ -27,6 +28,7 @@ export default function TodosPanel({ pendingAction }) {
   }, [todos, filter])
 
   const remaining = todos.filter((t) => !t.done).length
+  const completedTodos = useMemo(() => todos.filter((t) => t.done), [todos])
 
   function addTodo(e) {
     e.preventDefault()
@@ -59,6 +61,20 @@ export default function TodosPanel({ pendingAction }) {
         showToast(ok ? 'To-do restored.' : 'Failed to restore the to-do. Please try again.')
       },
     })
+  }
+
+  function clearCompleted() {
+    if (completedTodos.length === 0) return
+    const count = completedTodos.length
+    const deletedIds = softDeleteMany('todo', completedTodos)
+    setConfirmClear(false)
+
+    if (deletedIds.length !== count) {
+      showToast('Failed to clear completed to-dos. Please try again.')
+      return
+    }
+
+    showToast(`${count} completed to-do${count === 1 ? '' : 's'} cleared.`)
   }
 
   useEffect(() => {
@@ -109,21 +125,33 @@ export default function TodosPanel({ pendingAction }) {
         </button>
       </form>
 
-      <div className="flex gap-1 mb-5">
-        {FILTERS.map((f) => (
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex gap-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className="text-xs px-3 py-1.5 rounded-md transition-colors"
+              style={{
+                background: filter === f ? 'var(--panel-2)' : 'transparent',
+                color: filter === f ? 'var(--text)' : 'var(--text-dim)',
+                border: '1px solid var(--line)',
+              }}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {completedTodos.length > 0 && (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className="text-xs px-3 py-1.5 rounded-md transition-colors"
-            style={{
-              background: filter === f ? 'var(--panel-2)' : 'transparent',
-              color: filter === f ? 'var(--text)' : 'var(--text-dim)',
-              border: '1px solid var(--line)',
-            }}
+            onClick={() => setConfirmClear(true)}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md"
+            style={{ color: 'var(--coral)' }}
           >
-            {f}
+            <CheckCheck size={14} /> Clear Completed
           </button>
-        ))}
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -171,6 +199,49 @@ export default function TodosPanel({ pendingAction }) {
           </div>
         ))}
       </div>
+
+      {confirmClear && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0, 0, 0, 0.55)' }}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl p-6"
+            style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-display text-lg" style={{ color: 'var(--text)' }}>
+                Clear all completed to-dos?
+              </h3>
+              <button onClick={() => setConfirmClear(false)} style={{ color: 'var(--text-dim)' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>
+              This will remove all completed to-dos from your list. They'll be moved to Recently
+              Deleted, so you can still restore them afterward.
+            </p>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="rounded-md px-4 py-2 text-sm"
+                style={{ color: 'var(--text-dim)', border: '1px solid var(--line)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearCompleted}
+                className="rounded-md px-4 py-2 text-sm font-medium"
+                style={{ background: 'var(--coral)', color: '#fff' }}
+              >
+                Clear Completed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
