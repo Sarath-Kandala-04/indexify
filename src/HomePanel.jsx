@@ -1,15 +1,13 @@
 import { useMemo } from 'react'
 import { NotebookText, ListTodo, Wallet, ArrowRight } from 'lucide-react'
-import { useLocalStorage } from './useLocalStorage'
+import { useData } from './DataContext'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
 export default function HomePanel({ goTo }) {
-  const [notes] = useLocalStorage('dashboard.notes', [])
-  const [todos] = useLocalStorage('dashboard.todos', [])
-  const [expenses] = useLocalStorage('dashboard.expenses', [])
+  const { notes, todos, expenses } = useData()
 
   const recentNotes = useMemo(
     () => [...notes].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 3),
@@ -108,10 +106,7 @@ export default function HomePanel({ goTo }) {
                 className="flex items-center gap-3 px-3 py-2 rounded-md"
                 style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
               >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: priorityColor[t.priority] }}
-                />
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: priorityColor[t.priority] }} />
                 <span className="text-sm" style={{ color: 'var(--text)' }}>
                   {t.text}
                 </span>
@@ -141,11 +136,7 @@ export default function HomePanel({ goTo }) {
         ) : (
           <div className="grid grid-cols-3 gap-3">
             {recentNotes.map((n) => (
-              <div
-                key={n.id}
-                className="p-3 rounded-lg"
-                style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
-              >
+              <div key={n.id} className="p-3 rounded-lg" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>
                 <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
                   {n.title || 'Untitled note'}
                 </div>

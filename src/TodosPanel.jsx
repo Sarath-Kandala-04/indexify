@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2, Check } from 'lucide-react'
-import { useLocalStorage } from './useLocalStorage'
+import { useData } from './DataContext'
+import { useToast } from './ToastContext'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -9,7 +10,8 @@ function uid() {
 const FILTERS = ['All', 'Active', 'Done']
 
 export default function TodosPanel({ pendingAction }) {
-  const [todos, setTodos] = useLocalStorage('dashboard.todos', [])
+  const { todos, setTodos, softDelete, restoreItem } = useData()
+  const { showToast } = useToast()
   const [text, setText] = useState('')
   const [priority, setPriority] = useState('normal')
   const [filter, setFilter] = useState('All')
@@ -42,12 +44,23 @@ export default function TodosPanel({ pendingAction }) {
   }
 
   function remove(id) {
-    setTodos(todos.filter((t) => t.id !== id))
+    const todo = todos.find((t) => t.id === id)
+    if (!todo) return
+    const deletedId = softDelete('todo', todo)
+    if (!deletedId) {
+      showToast('Unable to save changes. Please try again.')
+      return
+    }
+    showToast('To-do moved to Recently Deleted.', {
+      actionLabel: 'Undo',
+      duration: 5000,
+      onAction: () => {
+        const ok = restoreItem(deletedId)
+        showToast(ok ? 'To-do restored.' : 'Failed to restore the to-do. Please try again.')
+      },
+    })
   }
 
-  // Respond to the Ctrl+T shortcut dispatched from App.jsx.
-  // There's no "blank todo" concept today — addTodo() requires typed text —
-  // so the shortcut's job is just to get the user's cursor into the input.
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'new-todo') return
     if (lastHandledActionId.current === pendingAction.id) return

@@ -1,13 +1,15 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2, Search } from 'lucide-react'
-import { useLocalStorage } from './useLocalStorage'
+import { useData } from './DataContext'
+import { useToast } from './ToastContext'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
 export default function NotesPanel({ pendingAction }) {
-  const [notes, setNotes] = useLocalStorage('dashboard.notes', [])
+  const { notes, setNotes, softDelete, restoreItem } = useData()
+  const { showToast } = useToast()
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
 
@@ -18,9 +20,7 @@ export default function NotesPanel({ pendingAction }) {
     const q = query.trim().toLowerCase()
     const list = q
       ? notes.filter(
-          (n) =>
-            n.title.toLowerCase().includes(q) ||
-            n.body.toLowerCase().includes(q)
+          (n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q)
         )
       : notes
     return [...list].sort((a, b) => b.updatedAt - a.updatedAt)
@@ -29,30 +29,35 @@ export default function NotesPanel({ pendingAction }) {
   const active = notes.find((n) => n.id === activeId) || null
 
   function createNote() {
-    const note = {
-      id: uid(),
-      title: 'Untitled note',
-      body: '',
-      updatedAt: Date.now(),
-    }
+    const note = { id: uid(), title: 'Untitled note', body: '', updatedAt: Date.now() }
     setNotes([note, ...notes])
     setActiveId(note.id)
-    // Focus the title field right after creating, so the user can type immediately.
     requestAnimationFrame(() => titleInputRef.current?.focus())
   }
 
   function updateNote(id, patch) {
-    setNotes(
-      notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n))
-    )
+    setNotes(notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)))
   }
 
   function deleteNote(id) {
-    setNotes(notes.filter((n) => n.id !== id))
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
     if (activeId === id) setActiveId(null)
+    const deletedId = softDelete('note', note)
+    if (!deletedId) {
+      showToast('Unable to save changes. Please try again.')
+      return
+    }
+    showToast('Note moved to Recently Deleted.', {
+      actionLabel: 'Undo',
+      duration: 5000,
+      onAction: () => {
+        const ok = restoreItem(deletedId)
+        showToast(ok ? 'Note restored.' : 'Failed to restore the note. Please try again.')
+      },
+    })
   }
 
-  // Respond to the Ctrl+N shortcut dispatched from App.jsx.
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'new-note') return
     if (lastHandledActionId.current === pendingAction.id) return
@@ -97,9 +102,7 @@ export default function NotesPanel({ pendingAction }) {
               key={n.id}
               onClick={() => setActiveId(n.id)}
               className="w-full text-left px-3 py-2.5 rounded-md mb-1 transition-colors"
-              style={{
-                background: activeId === n.id ? 'var(--panel-2)' : 'transparent',
-              }}
+              style={{ background: activeId === n.id ? 'var(--panel-2)' : 'transparent' }}
             >
               <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
                 {n.title || 'Untitled note'}

@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { useLocalStorage } from './useLocalStorage'
+import { useData } from './DataContext'
+import { useToast } from './ToastContext'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -22,7 +23,8 @@ function todayStr() {
 }
 
 export default function ExpensesPanel({ pendingAction }) {
-  const [expenses, setExpenses] = useLocalStorage('dashboard.expenses', [])
+  const { expenses, setExpenses, softDelete, restoreItem } = useData()
+  const { showToast } = useToast()
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState('Food')
@@ -66,12 +68,23 @@ export default function ExpensesPanel({ pendingAction }) {
   }
 
   function remove(id) {
-    setExpenses(expenses.filter((e) => e.id !== id))
+    const expense = expenses.find((e) => e.id === id)
+    if (!expense) return
+    const deletedId = softDelete('expense', expense)
+    if (!deletedId) {
+      showToast('Unable to save changes. Please try again.')
+      return
+    }
+    showToast('Expense moved to Recently Deleted.', {
+      actionLabel: 'Undo',
+      duration: 5000,
+      onAction: () => {
+        const ok = restoreItem(deletedId)
+        showToast(ok ? 'Expense restored.' : 'Failed to restore the expense. Please try again.')
+      },
+    })
   }
 
-  // Respond to the Ctrl+E shortcut dispatched from App.jsx.
-  // There's no "blank expense" concept today — addExpense() requires a
-  // positive amount — so the shortcut just focuses the amount field.
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'new-expense') return
     if (lastHandledActionId.current === pendingAction.id) return
@@ -151,10 +164,7 @@ export default function ExpensesPanel({ pendingAction }) {
               <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--panel-2)' }}>
                 <div
                   className="h-full rounded-full"
-                  style={{
-                    width: `${(total / maxCat) * 100}%`,
-                    background: CATEGORY_COLOR[cat],
-                  }}
+                  style={{ width: `${(total / maxCat) * 100}%`, background: CATEGORY_COLOR[cat] }}
                 />
               </div>
               <span className="text-xs font-mono w-16 text-right" style={{ color: 'var(--text-dim)' }}>
@@ -177,10 +187,7 @@ export default function ExpensesPanel({ pendingAction }) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md group"
             style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
           >
-            <span
-              className="w-2 h-2 rounded-full shrink-0"
-              style={{ background: CATEGORY_COLOR[e.category] }}
-            />
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CATEGORY_COLOR[e.category] }} />
             <span className="flex-1 text-sm truncate" style={{ color: 'var(--text)' }}>
               {e.label}
             </span>

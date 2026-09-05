@@ -8,6 +8,7 @@ import {
   Settings,
   ChevronDown,
   Check,
+  Trash2,
 } from 'lucide-react'
 
 import HomePanel from './HomePanel'
@@ -15,38 +16,18 @@ import NotesPanel from './NotesPanel'
 import TodosPanel from './TodosPanel'
 import ExpensesPanel from './ExpensesPanel'
 import SubscriptionsPanel from './SubscriptionsPanel'
+import RecentlyDeletedPanel from './RecentlyDeletedPanel'
 import Clock from './Clock'
 import { useTheme } from './useTheme'
 
 const TABS = [
-  {
-    id: 'notes',
-    label: 'Notes',
-    icon: NotebookText,
-    accent: 'var(--teal)',
-  },
-  {
-    id: 'todos',
-    label: 'To-dos',
-    icon: ListTodo,
-    accent: 'var(--teal)',
-  },
-  {
-    id: 'expenses',
-    label: 'Expenses',
-    icon: Wallet,
-    accent: 'var(--teal)',
-  },
-  {
-    id: 'subscriptions',
-    label: 'Subscriptions',
-    icon: CreditCard,
-    accent: 'var(--teal)',
-  },
+  { id: 'notes', label: 'Notes', icon: NotebookText, accent: 'var(--teal)' },
+  { id: 'todos', label: 'To-dos', icon: ListTodo, accent: 'var(--teal)' },
+  { id: 'expenses', label: 'Expenses', icon: Wallet, accent: 'var(--teal)' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, accent: 'var(--teal)' },
 ]
 
-// Centralized shortcut map: Ctrl+<key> -> { tab to switch to, action type to dispatch }
-// Only actions that actually exist in the current panels are wired here.
+// v1.1.0 shortcuts — unchanged.
 const SHORTCUTS = {
   n: { tab: 'notes', action: 'new-note' },
   t: { tab: 'todos', action: 'new-todo' },
@@ -99,11 +80,7 @@ function SettingsMenu() {
               type="button"
               onClick={() => setThemeOpen((v) => !v)}
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
-              style={{
-                background: 'var(--panel-2)',
-                border: '1px solid var(--line)',
-                color: 'var(--text)',
-              }}
+              style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
             >
               {theme === 'dark' ? 'Dark' : 'Light'}
               <ChevronDown size={13} />
@@ -168,11 +145,6 @@ function SettingsMenu() {
 
 export default function App() {
   const [tab, setTab] = useState('home')
-
-  // pendingAction is a one-shot signal for keyboard-triggered actions.
-  // { type: 'new-note' | 'new-todo' | 'new-expense', id: <unique> }
-  // The id changes on every dispatch so panels can detect a fresh trigger
-  // even if the same action type fires twice in a row.
   const [pendingAction, setPendingAction] = useState(null)
 
   const dispatchShortcut = useCallback((type) => {
@@ -181,11 +153,7 @@ export default function App() {
 
   useEffect(() => {
     function handleKeyDown(e) {
-      // Only plain Ctrl+<key> combos — no Shift/Alt/Meta, so we don't
-      // hijack unrelated OS/browser combos like Ctrl+Shift+N.
       if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
-
-      // Never intercept while the user is typing anywhere.
       if (isTypingTarget(document.activeElement)) return
 
       const key = e.key.toLowerCase()
@@ -202,27 +170,18 @@ export default function App() {
   }, [dispatchShortcut])
 
   return (
-    <div
-      className="h-screen flex"
-      style={{ background: 'var(--ink)' }}
-    >
+    <div className="h-screen flex" style={{ background: 'var(--ink)' }}>
       <nav
-  className="w-16 shrink-0 flex flex-col items-center py-5 gap-1 relative z-30"
-  style={{ borderRight: '1px solid var(--line)' }}
->
+        className="w-16 shrink-0 flex flex-col items-center py-5 gap-1 relative z-30"
+        style={{ borderRight: '1px solid var(--line)' }}
+      >
         <button
           onClick={() => setTab('home')}
           className="mb-4 w-9 h-9 rounded-md flex items-center justify-center overflow-hidden transition-opacity hover:opacity-70"
-          style={{
-            background: 'var(--panel-2)',
-          }}
+          style={{ background: 'var(--panel-2)' }}
           title="Home"
         >
-          <img
-  src="./favicon-32x32.png"
-  alt="Home"
-  className="w-5 h-5 object-contain"
-/>
+          <img src="./favicon-32x32.png" alt="Home" className="w-5 h-5 object-contain" />
         </button>
 
         {TABS.map((t) => {
@@ -236,9 +195,7 @@ export default function App() {
               title={t.label}
               className={
                 'w-11 h-11 rounded-md flex items-center justify-center relative transition-colors ' +
-                (isActive
-                  ? 'bg-[var(--panel-2)]'
-                  : 'bg-transparent hover:bg-[var(--panel-2)]')
+                (isActive ? 'bg-[var(--panel-2)]' : 'bg-transparent hover:bg-[var(--panel-2)]')
               }
             >
               {isActive && (
@@ -247,16 +204,30 @@ export default function App() {
                   style={{ background: t.accent }}
                 />
               )}
-
-              <Icon
-                size={19}
-                color={isActive ? t.accent : 'var(--text-dim)'}
-              />
+              <Icon size={19} color={isActive ? t.accent : 'var(--text-dim)'} />
             </button>
           )
         })}
 
         <div className="flex-1" />
+
+        {/* Recently Deleted — placed directly above Settings */}
+        <button
+          onClick={() => setTab('deleted')}
+          title="Recently Deleted"
+          className={
+            'w-11 h-11 rounded-md flex items-center justify-center relative transition-colors ' +
+            (tab === 'deleted' ? 'bg-[var(--panel-2)]' : 'bg-transparent hover:bg-[var(--panel-2)]')
+          }
+        >
+          {tab === 'deleted' && (
+            <span
+              className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full"
+              style={{ background: 'var(--teal)' }}
+            />
+          )}
+          <Trash2 size={19} color={tab === 'deleted' ? 'var(--teal)' : 'var(--text-dim)'} />
+        </button>
 
         <SettingsMenu />
       </nav>
@@ -267,14 +238,11 @@ export default function App() {
         </div>
 
         {tab === 'home' && <HomePanel goTo={setTab} />}
-
         {tab === 'notes' && <NotesPanel pendingAction={pendingAction} />}
-
         {tab === 'todos' && <TodosPanel pendingAction={pendingAction} />}
-
         {tab === 'expenses' && <ExpensesPanel pendingAction={pendingAction} />}
-
         {tab === 'subscriptions' && <SubscriptionsPanel />}
+        {tab === 'deleted' && <RecentlyDeletedPanel />}
       </main>
     </div>
   )
