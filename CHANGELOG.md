@@ -2,6 +2,17 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.8.0] - Expense Charts
+
+### Added
+- Category pie chart and spend-over-time line chart on the Expenses page, powered by existing expense data.
+- Weekly / Monthly / Yearly range filter updating both charts and a Total Spending figure.
+- Graceful "Not enough expense data" empty state when there's too little data to chart.
+- Uncategorized expenses handled without breaking the pie chart.
+
+### Dependencies
+- Added `recharts` (no chart library existed previously).
+
 ## [1.7.0] - Universal Search
 
 ### Added

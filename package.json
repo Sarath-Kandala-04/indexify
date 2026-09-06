@@ -16,7 +16,8 @@
   "dependencies": {
     "lucide-react": "^1.33.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -32,19 +33,19 @@
     "vite": "^8.2.0"
   },
   "build": {
-  "appId": "com.sarath.indexify",
-  "productName": "Indexify",
-  "directories": {
-    "output": "release"
-  },
-  "files": [
-    "dist/**/*",
-    "electron/**/*"
-  ],
-  "icon": "build/icon.ico",
-  "win": {
-    "target": "nsis",
-    "icon": "build/icon.ico"
+    "appId": "com.sarath.indexify",
+    "productName": "Indexify",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "icon": "build/icon.ico",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    }
   }
-}
 }

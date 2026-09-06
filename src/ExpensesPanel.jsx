@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Plus, Trash2, Pin, PinOff } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
+import ExpenseCharts from './ExpenseCharts'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -129,6 +130,8 @@ export default function ExpensesPanel({ pendingAction }) {
           </div>
         </div>
       </div>
+
+      <ExpenseCharts expenses={expenses} />
 
       <form onSubmit={addExpense} className="flex flex-wrap gap-2 mb-6">
         <input
