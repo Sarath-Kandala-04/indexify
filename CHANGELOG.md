@@ -2,6 +2,15 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.6.0] - Curated Subscription Brand List
+
+### Added
+- Searchable brand picker when creating/editing a Subscription, with a curated list of common services (Netflix, Spotify, YouTube Premium, Amazon Prime, Disney+, etc.).
+- Custom brand names remain fully supported — the picker just writes into the existing name field.
+
+### Notes
+- No migration needed; existing subscriptions are untouched since the picker reuses the same `name` field.
+
 ## [1.5.0] - Accent Colors
 
 ### Added

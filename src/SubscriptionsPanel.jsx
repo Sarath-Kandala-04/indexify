@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import BrandPicker from './BrandPicker'
 import {
   Plus,
   Trash2,
@@ -408,18 +409,15 @@ export default function SubscriptionsPanel() {
 
             <form onSubmit={saveSubscription} className="flex flex-col gap-4">
               <div>
-                <label className="mb-1.5 block text-xs" style={{ color: 'var(--text-dim)' }}>
-                  Subscription name
-                </label>
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full rounded-md px-3 py-2 text-sm outline-none"
-                  style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-                  required
-                />
-              </div>
+  <label className="mb-1.5 block text-xs" style={{ color: 'var(--text-dim)' }}>
+    Brand / Subscription name
+  </label>
+
+  <BrandPicker
+    value={form.name}
+    onChange={(val) => setForm((current) => ({ ...current, name: val }))}
+  />
+</div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
