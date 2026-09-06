@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { NotebookText, ListTodo, Wallet, CreditCard, ArrowRight, Pin, Star } from 'lucide-react'
 import { useData } from './DataContext'
+import SearchBar from './SearchBar'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -65,9 +66,13 @@ export default function HomePanel({ goTo }) {
       <h2 className="font-display text-3xl mb-1" style={{ color: 'var(--text)' }}>
         Home
       </h2>
-      <p className="text-sm mb-8" style={{ color: 'var(--text-dim)' }}>
+      <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>
         {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
       </p>
+
+      <div className="mb-8">
+        <SearchBar goTo={goTo} />
+      </div>
 
       <div className="grid grid-cols-3 gap-3 mb-8">
         <button

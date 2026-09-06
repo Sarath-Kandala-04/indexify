@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import BrandPicker from './BrandPicker'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import {
   Plus,
   Trash2,
@@ -16,6 +15,7 @@ import {
 
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
+import BrandPicker from './BrandPicker'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -58,7 +58,7 @@ function emptyForm() {
   }
 }
 
-export default function SubscriptionsPanel() {
+export default function SubscriptionsPanel({ pendingAction }) {
   const { subscriptions, setSubscriptions, softDelete, restoreItem } = useData()
   const { showToast } = useToast()
 
@@ -67,6 +67,9 @@ export default function SubscriptionsPanel() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState(emptyForm())
+  const [highlightId, setHighlightId] = useState(null)
+
+  const lastHandledHighlightId = useRef(null)
 
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'active')
   const monthlyTotal = activeSubscriptions.reduce((total, s) => total + getMonthlyCost(s), 0)
@@ -182,6 +185,15 @@ export default function SubscriptionsPanel() {
     )
   }
 
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'highlight-subscription') return
+    if (lastHandledHighlightId.current === pendingAction.id) return
+    lastHandledHighlightId.current = pendingAction.id
+    setHighlightId(pendingAction.itemId)
+    const timer = setTimeout(() => setHighlightId(null), 2000)
+    return () => clearTimeout(timer)
+  }, [pendingAction])
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1100px] px-8 pt-20 pb-5">
@@ -287,7 +299,7 @@ export default function SubscriptionsPanel() {
                     className="rounded-lg p-4 transition-colors"
                     style={{
                       background: 'var(--panel-2)',
-                      border: '1px solid var(--line)',
+                      border: subscription.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
                       opacity: subscription.status === 'paused' ? 0.6 : 1,
                     }}
                   >
@@ -409,15 +421,14 @@ export default function SubscriptionsPanel() {
 
             <form onSubmit={saveSubscription} className="flex flex-col gap-4">
               <div>
-  <label className="mb-1.5 block text-xs" style={{ color: 'var(--text-dim)' }}>
-    Brand / Subscription name
-  </label>
-
-  <BrandPicker
-    value={form.name}
-    onChange={(val) => setForm((current) => ({ ...current, name: val }))}
-  />
-</div>
+                <label className="mb-1.5 block text-xs" style={{ color: 'var(--text-dim)' }}>
+                  Brand / Subscription name
+                </label>
+                <BrandPicker
+                  value={form.name}
+                  onChange={(val) => setForm((current) => ({ ...current, name: val }))}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

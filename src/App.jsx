@@ -41,7 +41,6 @@ function isTypingTarget(el) {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable
 }
 
-// Small swatch preview used both in the closed control and the option list.
 function AccentSwatch({ accentId, size = 12 }) {
   return (
     <span
@@ -227,6 +226,9 @@ export default function App() {
     setPendingAction({ type, id: Date.now() + Math.random() })
   }, [])
 
+  // Extended navigation used by Home's Favorites and Search: switches tab,
+  // and optionally dispatches a pendingAction so the destination panel can
+  // open or highlight the specific item.
   const goToItem = useCallback((tabId, action) => {
     setTab(tabId)
     if (action) {
@@ -323,7 +325,7 @@ export default function App() {
         {tab === 'notes' && <NotesPanel pendingAction={pendingAction} />}
         {tab === 'todos' && <TodosPanel pendingAction={pendingAction} />}
         {tab === 'expenses' && <ExpensesPanel pendingAction={pendingAction} />}
-        {tab === 'subscriptions' && <SubscriptionsPanel />}
+        {tab === 'subscriptions' && <SubscriptionsPanel pendingAction={pendingAction} />}
         {tab === 'deleted' && <RecentlyDeletedPanel />}
       </main>
     </div>

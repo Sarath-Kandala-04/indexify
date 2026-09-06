@@ -16,9 +16,11 @@ export default function TodosPanel({ pendingAction }) {
   const [priority, setPriority] = useState('normal')
   const [filter, setFilter] = useState('All')
   const [confirmClear, setConfirmClear] = useState(false)
+  const [highlightId, setHighlightId] = useState(null)
 
   const textInputRef = useRef(null)
   const lastHandledActionId = useRef(null)
+  const lastHandledHighlightId = useRef(null)
 
   const filtered = useMemo(() => {
     let list = todos
@@ -79,12 +81,10 @@ export default function TodosPanel({ pendingAction }) {
     const count = completedTodos.length
     const deletedIds = softDeleteMany('todo', completedTodos)
     setConfirmClear(false)
-
     if (deletedIds.length !== count) {
       showToast('Failed to clear completed to-dos. Please try again.')
       return
     }
-
     showToast(`${count} completed to-do${count === 1 ? '' : 's'} cleared.`)
   }
 
@@ -93,6 +93,15 @@ export default function TodosPanel({ pendingAction }) {
     if (lastHandledActionId.current === pendingAction.id) return
     lastHandledActionId.current = pendingAction.id
     textInputRef.current?.focus()
+  }, [pendingAction])
+
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'highlight-todo') return
+    if (lastHandledHighlightId.current === pendingAction.id) return
+    lastHandledHighlightId.current = pendingAction.id
+    setHighlightId(pendingAction.itemId)
+    const timer = setTimeout(() => setHighlightId(null), 2000)
+    return () => clearTimeout(timer)
   }, [pendingAction])
 
   const priorityColor = { high: 'var(--accent)', normal: 'var(--accent)', low: 'var(--accent)' }
@@ -175,7 +184,10 @@ export default function TodosPanel({ pendingAction }) {
           <div
             key={t.id}
             className="flex items-center gap-3 px-3 py-2.5 rounded-md group"
-            style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+            style={{
+              background: 'var(--panel)',
+              border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
+            }}
           >
             <button
               onClick={() => toggle(t.id)}

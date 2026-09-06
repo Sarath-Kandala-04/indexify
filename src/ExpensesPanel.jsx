@@ -29,9 +29,11 @@ export default function ExpensesPanel({ pendingAction }) {
   const [label, setLabel] = useState('')
   const [category, setCategory] = useState('Food')
   const [date, setDate] = useState(todayStr())
+  const [highlightId, setHighlightId] = useState(null)
 
   const amountInputRef = useRef(null)
   const lastHandledActionId = useRef(null)
+  const lastHandledHighlightId = useRef(null)
 
   const sorted = useMemo(
     () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt),
@@ -101,6 +103,15 @@ export default function ExpensesPanel({ pendingAction }) {
     if (lastHandledActionId.current === pendingAction.id) return
     lastHandledActionId.current = pendingAction.id
     amountInputRef.current?.focus()
+  }, [pendingAction])
+
+  useEffect(() => {
+    if (!pendingAction || pendingAction.type !== 'highlight-expense') return
+    if (lastHandledHighlightId.current === pendingAction.id) return
+    lastHandledHighlightId.current = pendingAction.id
+    setHighlightId(pendingAction.itemId)
+    const timer = setTimeout(() => setHighlightId(null), 2000)
+    return () => clearTimeout(timer)
   }, [pendingAction])
 
   return (
@@ -196,7 +207,10 @@ export default function ExpensesPanel({ pendingAction }) {
           <div
             key={e.id}
             className="flex items-center gap-3 px-3 py-2.5 rounded-md group"
-            style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
+            style={{
+              background: 'var(--panel)',
+              border: e.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
+            }}
           >
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CATEGORY_COLOR[e.category] }} />
             <span className="flex-1 text-sm truncate" style={{ color: 'var(--text)' }}>

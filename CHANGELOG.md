@@ -2,6 +2,17 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.7.0] - Universal Search
+
+### Added
+- Search bar on Home searching across Notes (title/body), To-dos (text), Expenses (label/category), and Subscriptions (name/category).
+- Results grouped by type with icons; clicking a result navigates to its module (Notes opens the specific note; To-dos/Expenses/Subscriptions switch tab and briefly highlight the matched row).
+- Empty state for no matches.
+
+### Notes
+- Recently Deleted items are excluded from search by design.
+- Pinned/Favorite state is untouched by search.
+
 ## [1.6.0] - Curated Subscription Brand List
 
 ### Added

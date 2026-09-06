@@ -88,7 +88,7 @@ export default function NotesPanel({ pendingAction }) {
   return (
     <div className="flex h-full">
       <div className="w-72 shrink-0 border-r flex flex-col" style={{ borderColor: 'var(--line)' }}>
-        <div className="p-4 flex flex-col gap-3" style={{ borderColor: 'var(--line)' }}>
+        <div className="p-4 flex flex-col gap-3">
           <button
             onClick={createNote}
             className="flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors"
