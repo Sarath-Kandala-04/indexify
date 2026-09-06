@@ -1,10 +1,23 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Search, Pin, PinOff } from 'lucide-react'
+import { Plus, Trash2, Search, Pin, PinOff, GripVertical } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
+import { ensureBlocks, blocksToPlainText, newBlock } from './noteBlocks'
+import SlashMenu from './SlashMenu'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+}
+
+const BLOCK_STYLE = {
+  paragraph: 'text-[15px] leading-relaxed',
+  heading1: 'font-display text-2xl',
+  heading2: 'font-display text-xl',
+  heading3: 'font-display text-lg',
+  quote: 'text-[15px] italic pl-3 border-l-2',
+  bulleted: 'text-[15px]',
+  numbered: 'text-[15px]',
+  todo: 'text-[15px]',
 }
 
 export default function NotesPanel({ pendingAction }) {
@@ -12,8 +25,10 @@ export default function NotesPanel({ pendingAction }) {
   const { showToast } = useToast()
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
+  const [slashMenu, setSlashMenu] = useState(null)
 
   const titleInputRef = useRef(null)
+  const blockRefs = useRef({})
   const lastHandledNewId = useRef(null)
   const lastHandledOpenId = useRef(null)
 
@@ -21,23 +36,90 @@ export default function NotesPanel({ pendingAction }) {
     const q = query.trim().toLowerCase()
     const list = q
       ? notes.filter(
-          (n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q)
+          (n) => n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)
         )
       : notes
     return [...list].sort((a, b) => b.updatedAt - a.updatedAt)
   }, [notes, query])
 
-  const active = notes.find((n) => n.id === activeId) || null
+  const activeRaw = notes.find((n) => n.id === activeId) || null
+  const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw) } : null
 
   function createNote() {
-    const note = { id: uid(), title: 'Untitled note', body: '', updatedAt: Date.now(), isPinned: false }
+    const note = {
+      id: uid(),
+      title: 'Untitled note',
+      body: '',
+      blocks: [newBlock('paragraph', '')],
+      updatedAt: Date.now(),
+      isPinned: false,
+    }
     setNotes([note, ...notes])
     setActiveId(note.id)
     requestAnimationFrame(() => titleInputRef.current?.focus())
   }
 
-  function updateNote(id, patch) {
-    setNotes(notes.map((n) => (n.id === id ? { ...n, ...patch, updatedAt: Date.now() } : n)))
+  function persistBlocks(id, blocks) {
+    setNotes(
+      notes.map((n) =>
+        n.id === id ? { ...n, blocks, body: blocksToPlainText(blocks), updatedAt: Date.now() } : n
+      )
+    )
+  }
+
+  function updateTitle(id, title) {
+    setNotes(notes.map((n) => (n.id === id ? { ...n, title, updatedAt: Date.now() } : n)))
+  }
+
+  function updateBlockText(blockId, text) {
+    const blocks = active.blocks.map((b) => (b.id === blockId ? { ...b, text } : b))
+    persistBlocks(active.id, blocks)
+
+    if (text.startsWith('/')) {
+      const el = blockRefs.current[blockId]
+      const rect = el?.getBoundingClientRect()
+      const containerRect = el?.closest('.notes-editor-scroll')?.getBoundingClientRect()
+      setSlashMenu({
+        blockId,
+        filter: text.slice(1),
+        position: {
+          top: (rect?.top || 0) - (containerRect?.top || 0) + (el?.offsetHeight || 24) + 4,
+          left: 0,
+        },
+      })
+    } else if (slashMenu?.blockId === blockId) {
+      setSlashMenu(null)
+    }
+  }
+
+  function applySlashCommand(type) {
+    if (!slashMenu) return
+    const blocks = active.blocks.map((b) =>
+      b.id === slashMenu.blockId ? { ...b, type, text: '' } : b
+    )
+    persistBlocks(active.id, blocks)
+    setSlashMenu(null)
+    requestAnimationFrame(() => blockRefs.current[slashMenu.blockId]?.focus())
+  }
+
+  function toggleTodoBlock(blockId) {
+    const blocks = active.blocks.map((b) => (b.id === blockId ? { ...b, checked: !b.checked } : b))
+    persistBlocks(active.id, blocks)
+  }
+
+  function addBlockAfter(blockId) {
+    const idx = active.blocks.findIndex((b) => b.id === blockId)
+    const fresh = newBlock('paragraph', '')
+    const blocks = [...active.blocks]
+    blocks.splice(idx + 1, 0, fresh)
+    persistBlocks(active.id, blocks)
+    requestAnimationFrame(() => blockRefs.current[fresh.id]?.focus())
+  }
+
+  function removeBlock(blockId) {
+    if (active.blocks.length <= 1) return
+    const blocks = active.blocks.filter((b) => b.id !== blockId)
+    persistBlocks(active.id, blocks)
   }
 
   function togglePin(id) {
@@ -137,7 +219,7 @@ export default function NotesPanel({ pendingAction }) {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {active ? (
           <>
             <div className="flex items-center justify-between px-8 pt-20 pb-3">
@@ -149,7 +231,6 @@ export default function NotesPanel({ pendingAction }) {
                   onClick={() => togglePin(active.id)}
                   className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
                   style={{ color: active.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-                  title={active.isPinned ? 'Unpin' : 'Pin'}
                 >
                   {active.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
                   {active.isPinned ? 'Unpin' : 'Pin'}
@@ -163,22 +244,75 @@ export default function NotesPanel({ pendingAction }) {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-4">
+
+            <div className="notes-editor-scroll flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-3 relative">
               <input
                 ref={titleInputRef}
                 value={active.title}
-                onChange={(e) => updateNote(active.id, { title: e.target.value })}
+                onChange={(e) => updateTitle(active.id, e.target.value)}
                 placeholder="Untitled note"
-                className="font-display text-3xl bg-transparent outline-none"
+                className="font-display text-3xl bg-transparent outline-none mb-2"
                 style={{ color: 'var(--text)' }}
               />
-              <textarea
-                value={active.body}
-                onChange={(e) => updateNote(active.id, { body: e.target.value })}
-                placeholder="Start writing..."
-                className="flex-1 bg-transparent outline-none resize-none text-[15px] leading-relaxed"
-                style={{ color: 'var(--text)' }}
-              />
+
+              {active.blocks.map((block) => (
+                <div key={block.id} className="group flex items-start gap-2">
+                  <GripVertical
+                    size={14}
+                    className="opacity-0 group-hover:opacity-40 mt-1.5 shrink-0"
+                    color="var(--text-dim)"
+                  />
+
+                  {block.type === 'divider' ? (
+                    <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
+                  ) : (
+                    <>
+                      {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
+                      {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
+                      {block.type === 'todo' && (
+                        <input
+                          type="checkbox"
+                          checked={!!block.checked}
+                          onChange={() => toggleTodoBlock(block.id)}
+                          className="mt-1.5"
+                        />
+                      )}
+                      <textarea
+                        ref={(el) => (blockRefs.current[block.id] = el)}
+                        value={block.text}
+                        onChange={(e) => updateBlockText(block.id, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (slashMenu?.blockId === block.id) return
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            addBlockAfter(block.id)
+                          } else if (e.key === 'Backspace' && block.text === '') {
+                            e.preventDefault()
+                            removeBlock(block.id)
+                          }
+                        }}
+                        placeholder={block.type === 'paragraph' ? "Start writing, or type '/' for commands..." : ''}
+                        rows={1}
+                        className={`flex-1 bg-transparent outline-none resize-none overflow-hidden ${BLOCK_STYLE[block.type]}`}
+                        style={{
+                          color: block.type === 'quote' ? 'var(--text-dim)' : 'var(--text)',
+                          borderColor: block.type === 'quote' ? 'var(--accent)' : undefined,
+                          textDecoration: block.type === 'todo' && block.checked ? 'line-through' : 'none',
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+              ))}
+
+              {slashMenu && (
+                <SlashMenu
+                  filter={slashMenu.filter}
+                  position={slashMenu.position}
+                  onSelect={applySlashCommand}
+                  onClose={() => setSlashMenu(null)}
+                />
+              )}
             </div>
           </>
         ) : (

@@ -25,7 +25,7 @@ The latest Windows installer is available from the GitHub Releases page.
 
 Download:
 
-`Indexify Setup 1.8.0.exe`
+`Indexify Setup 1.10.0.exe`
 
 > Windows may display a security warning because the application is currently not code-signed.
 
@@ -100,7 +100,7 @@ Uninstalling and reinstalling Indexify does not necessarily remove the applicati
 
 ## 📌 Status
 
-**Version:** 1.8.0
+**Version:** 1.10.0
 
 Indexify is currently a personal project and is actively being improved.
 

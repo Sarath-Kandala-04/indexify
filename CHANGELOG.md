@@ -2,6 +2,34 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [1.10.0] - Recurring To-dos + Floating Options Panel
+
+### Added
+- Repeat/Recurring option on To-dos with a floating options panel (Does not repeat / Daily / Weekly / Monthly / Yearly / Custom).
+- Weekly recurrence supports selecting specific weekdays; Custom supports "every N days/weeks/months".
+- Completing a recurring to-do advances it to its next occurrence (same id, no duplicate created) instead of just marking it done.
+- Subtle Repeat icon indicator on recurring to-dos.
+- Floating panel closes on outside click or Escape, and doesn't interfere with existing keyboard commands.
+
+### Notes
+- Recurrence data and due dates are additional fields on the existing To-do object, so Recently Deleted, Undo/Restore, and Favorites/Pin all continue working unmodified — a deleted recurring to-do restores with its exact recurrence config intact.
+- Home currently has no date-based "due today" Reminders section (only "Up next" by priority), so there was nothing to integrate recurring due dates into there — flagged as a possible future addition, out of scope for this version.
+
+## [1.9.0] - Notes Slash Commands / Rich Text Foundation
+
+### Added
+- Block-based note editor: typing "/" opens a filterable command menu (Text, Heading 1–3, Bullet List, Numbered List, To-do, Quote, Divider).
+- Keyboard navigation in the slash menu (Arrow Up/Down, Enter, Escape).
+- Notes now store structured `blocks` alongside a synced plain-text `body`.
+
+### Changed
+- Note editor body replaced with a stack of typed blocks instead of one plain textarea.
+
+### Notes
+- Fully backwards compatible: notes created before v1.9.0 open correctly and render as a single paragraph block. Nothing is rewritten in storage until the note is edited.
+- `body` stays in sync on every edit, so Home's recent-notes preview and Universal Search keep working unmodified.
+- v1.1.0 keyboard shortcuts (Ctrl+N/T/E) unaffected.
+
 ## [1.8.0] - Expense Charts
 
 ### Added

@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Check, CheckCheck, X, Pin, PinOff } from 'lucide-react'
+import { Plus, Trash2, Check, CheckCheck, X, Pin, PinOff, Repeat } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
+import { defaultRecurrence, getNextOccurrence, todayStr } from './recurrence'
+import RecurrencePanel from './RecurrencePanel'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -16,6 +18,8 @@ export default function TodosPanel({ pendingAction }) {
   const [priority, setPriority] = useState('normal')
   const [filter, setFilter] = useState('All')
   const [confirmClear, setConfirmClear] = useState(false)
+  const [newRecurrence, setNewRecurrence] = useState(defaultRecurrence())
+  const [recurrencePanelFor, setRecurrencePanelFor] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
 
   const textInputRef = useRef(null)
@@ -36,14 +40,40 @@ export default function TodosPanel({ pendingAction }) {
     e.preventDefault()
     if (!text.trim()) return
     setTodos([
-      { id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now(), isPinned: false },
+      {
+        id: uid(),
+        text: text.trim(),
+        done: false,
+        priority,
+        createdAt: Date.now(),
+        isPinned: false,
+        dueDate: todayStr(),
+        recurrence: newRecurrence,
+      },
       ...todos,
     ])
     setText('')
     setPriority('normal')
+    setNewRecurrence(defaultRecurrence())
   }
 
+  // Completing a recurring todo advances it to its next occurrence instead of
+  // just marking it done — same id, no duplicate item created.
   function toggle(id) {
+    const todo = todos.find((t) => t.id === id)
+    if (!todo) return
+
+    if (!todo.done && todo.recurrence?.enabled) {
+      const next = getNextOccurrence(todo.dueDate || todayStr(), todo.recurrence)
+      setTodos(
+        todos.map((t) =>
+          t.id === id ? { ...t, done: false, dueDate: next.toISOString().slice(0, 10) } : t
+        )
+      )
+      showToast('Completed — next occurrence scheduled.')
+      return
+    }
+
     setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
   }
 
@@ -56,6 +86,10 @@ export default function TodosPanel({ pendingAction }) {
     } catch {
       showToast('Failed to update favorite. Please try again.')
     }
+  }
+
+  function updateRecurrence(id, recurrence) {
+    setTodos(todos.map((t) => (t.id === id ? { ...t, recurrence } : t)))
   }
 
   function remove(id) {
@@ -117,13 +151,13 @@ export default function TodosPanel({ pendingAction }) {
         </span>
       </div>
 
-      <form onSubmit={addTodo} className="flex gap-2 mb-5">
+      <form onSubmit={addTodo} className="flex flex-wrap gap-2 mb-2 items-center relative">
         <input
           ref={textInputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Add a task..."
-          className="flex-1 rounded-md px-3 py-2.5 text-sm outline-none"
+          className="flex-1 min-w-[160px] rounded-md px-3 py-2.5 text-sm outline-none"
           style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
         />
         <select
@@ -136,16 +170,39 @@ export default function TodosPanel({ pendingAction }) {
           <option value="normal">Normal</option>
           <option value="low">Low</option>
         </select>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setRecurrencePanelFor(recurrencePanelFor === 'new' ? null : 'new')}
+            className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm"
+            style={{
+              background: newRecurrence.enabled ? 'var(--panel-2)' : 'transparent',
+              border: '1px solid var(--line)',
+              color: newRecurrence.enabled ? 'var(--accent)' : 'var(--text-dim)',
+            }}
+          >
+            <Repeat size={14} /> Repeat
+          </button>
+          {recurrencePanelFor === 'new' && (
+            <RecurrencePanel
+              recurrence={newRecurrence}
+              onChange={setNewRecurrence}
+              onClose={() => setRecurrencePanelFor(null)}
+            />
+          )}
+        </div>
+
         <button
           type="submit"
-          className="flex items-center gap-1.5 rounded-md px-3 text-sm font-medium"
+          className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-medium"
           style={{ background: 'var(--accent)', color: '#0d1210' }}
         >
           <Plus size={16} /> Add
         </button>
       </form>
 
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-5 mt-3">
         <div className="flex gap-1">
           {FILTERS.map((f) => (
             <button
@@ -183,7 +240,7 @@ export default function TodosPanel({ pendingAction }) {
         {filtered.map((t) => (
           <div
             key={t.id}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-md group"
+            className="relative flex items-center gap-3 px-3 py-2.5 rounded-md group"
             style={{
               background: 'var(--panel)',
               border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
@@ -204,19 +261,38 @@ export default function TodosPanel({ pendingAction }) {
               style={{ background: priorityColor[t.priority] }}
             />
             <span
-              className="flex-1 text-sm"
+              className="flex-1 text-sm flex items-center gap-1.5"
               style={{
                 color: t.done ? 'var(--text-dim)' : 'var(--text)',
                 textDecoration: t.done ? 'line-through' : 'none',
               }}
             >
               {t.text}
+              {t.recurrence?.enabled && <Repeat size={11} color="var(--text-dim)" title="Repeats" />}
             </span>
+
+            <div className="relative">
+              <button
+                onClick={() => setRecurrencePanelFor(recurrencePanelFor === t.id ? null : t.id)}
+                className={t.recurrence?.enabled ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+                style={{ color: t.recurrence?.enabled ? 'var(--accent)' : 'var(--text-dim)' }}
+                title="Repeat settings"
+              >
+                <Repeat size={14} />
+              </button>
+              {recurrencePanelFor === t.id && (
+                <RecurrencePanel
+                  recurrence={t.recurrence || defaultRecurrence()}
+                  onChange={(r) => updateRecurrence(t.id, r)}
+                  onClose={() => setRecurrencePanelFor(null)}
+                />
+              )}
+            </div>
+
             <button
               onClick={() => togglePin(t.id)}
               className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
               style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-              title={t.isPinned ? 'Unpin' : 'Pin'}
             >
               {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
             </button>
@@ -248,12 +324,10 @@ export default function TodosPanel({ pendingAction }) {
                 <X size={18} />
               </button>
             </div>
-
             <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>
               This will remove all completed to-dos from your list. They'll be moved to Recently
               Deleted, so you can still restore them afterward.
             </p>
-
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setConfirmClear(false)}
