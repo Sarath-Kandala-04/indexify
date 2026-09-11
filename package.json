@@ -14,7 +14,9 @@
     "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
+    "gray-matter": "^4.0.3",
     "lucide-react": "^1.33.0",
+    "papaparse": "^5.7.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.1"

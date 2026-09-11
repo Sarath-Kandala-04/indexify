@@ -38,3 +38,14 @@ This produces installers in the `release/` folder for whichever platform you're 
 - The app loads the built `dist/` folder in production, so always run `npm run build` before packaging.
 - All your data still lives in the browser's local storage inside the Electron window — same as the web version, just running in its own app window instead of a browser tab.
 - Auto-update, code signing, and platform-specific icons are not configured — add them in `electron-builder.json` if you plan to distribute this publicly.
+
+## 💾 Data & Privacy
+
+Starting in v2.0.0, Indexify stores your data as real files in a folder you choose:
+- Notes are saved as individual `.md` (Markdown) files.
+- To-dos, Expenses, and Subscriptions are saved as `.csv` spreadsheets.
+- A hidden `.indexify-meta.json` file tracks Recently Deleted items.
+
+You can open, back up, or sync this folder however you like — it's just files on your disk.
+
+On first launch after updating, Indexify will ask you to choose a data folder. If you have existing data from an older version, it's automatically migrated into that folder — your old data is left untouched during this process.

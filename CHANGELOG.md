@@ -2,6 +2,21 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.0.0] - File-Based Storage
+
+### Added
+- Notes now save as individual Markdown (`.md`) files, one per note, in a user-chosen data folder.
+- To-dos, Expenses, and Subscriptions now save as `.csv` spreadsheets in the same folder.
+- First-run folder picker with automatic, non-destructive migration from the old localStorage-based storage.
+- Recently Deleted metadata persisted in `.indexify-meta.json`.
+
+### Changed
+- `DataContext` now reads/writes real files via a secure Electron preload bridge instead of `localStorage`.
+- No panel-level code changed — Notes/To-dos/Expenses/Subscriptions/Recently Deleted/Home all continue working exactly as before.
+
+### Dependencies
+- Added `gray-matter` (Markdown frontmatter) and `papaparse` (CSV read/write).
+
 ## [1.10.0] - Recurring To-dos + Floating Options Panel
 
 ### Added
