@@ -1,9 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Check, CheckCheck, X, Pin, PinOff, Repeat } from 'lucide-react'
+import { Plus, Trash2, Check, CheckCheck, X, Pin, PinOff, Repeat, Link2 } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 import { defaultRecurrence, getNextOccurrence, todayStr } from './recurrence'
 import RecurrencePanel from './RecurrencePanel'
+import LinkPicker from './LinkPicker'
+import LinkedItems from './LinkedItems'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -11,7 +13,7 @@ function uid() {
 
 const FILTERS = ['All', 'Active', 'Done']
 
-export default function TodosPanel({ pendingAction }) {
+export default function TodosPanel({ pendingAction, goTo }) {
   const { todos, setTodos, softDelete, softDeleteMany, restoreItem } = useData()
   const { showToast } = useToast()
   const [text, setText] = useState('')
@@ -20,6 +22,8 @@ export default function TodosPanel({ pendingAction }) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [newRecurrence, setNewRecurrence] = useState(defaultRecurrence())
   const [recurrencePanelFor, setRecurrencePanelFor] = useState(null)
+  const [linkPickerFor, setLinkPickerFor] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
   const [highlightId, setHighlightId] = useState(null)
 
   const textInputRef = useRef(null)
@@ -41,14 +45,8 @@ export default function TodosPanel({ pendingAction }) {
     if (!text.trim()) return
     setTodos([
       {
-        id: uid(),
-        text: text.trim(),
-        done: false,
-        priority,
-        createdAt: Date.now(),
-        isPinned: false,
-        dueDate: todayStr(),
-        recurrence: newRecurrence,
+        id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now(),
+        isPinned: false, dueDate: todayStr(), recurrence: newRecurrence, links: [],
       },
       ...todos,
     ])
@@ -57,23 +55,15 @@ export default function TodosPanel({ pendingAction }) {
     setNewRecurrence(defaultRecurrence())
   }
 
-  // Completing a recurring todo advances it to its next occurrence instead of
-  // just marking it done — same id, no duplicate item created.
   function toggle(id) {
     const todo = todos.find((t) => t.id === id)
     if (!todo) return
-
     if (!todo.done && todo.recurrence?.enabled) {
       const next = getNextOccurrence(todo.dueDate || todayStr(), todo.recurrence)
-      setTodos(
-        todos.map((t) =>
-          t.id === id ? { ...t, done: false, dueDate: next.toISOString().slice(0, 10) } : t
-        )
-      )
+      setTodos(todos.map((t) => (t.id === id ? { ...t, done: false, dueDate: next.toISOString().slice(0, 10) } : t)))
       showToast('Completed — next occurrence scheduled.')
       return
     }
-
     setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
   }
 
@@ -90,6 +80,12 @@ export default function TodosPanel({ pendingAction }) {
 
   function updateRecurrence(id, recurrence) {
     setTodos(todos.map((t) => (t.id === id ? { ...t, recurrence } : t)))
+  }
+
+  function saveLinks(id, selected) {
+    setTodos(todos.map((t) => (t.id === id ? { ...t, links: selected } : t)))
+    setLinkPickerFor(null)
+    showToast('Links updated.')
   }
 
   function remove(id) {
@@ -143,12 +139,8 @@ export default function TodosPanel({ pendingAction }) {
   return (
     <div className="max-w-2xl mx-auto px-8 pt-20 pb-8 h-full overflow-y-auto">
       <div className="flex items-baseline justify-between mb-6">
-        <h2 className="font-display text-2xl" style={{ color: 'var(--text)' }}>
-          To-dos
-        </h2>
-        <span className="text-sm font-mono" style={{ color: 'var(--text-dim)' }}>
-          {remaining} open
-        </span>
+        <h2 className="font-display text-2xl" style={{ color: 'var(--text)' }}>To-dos</h2>
+        <span className="text-sm font-mono" style={{ color: 'var(--text-dim)' }}>{remaining} open</span>
       </div>
 
       <form onSubmit={addTodo} className="flex flex-wrap gap-2 mb-2 items-center relative">
@@ -185,11 +177,7 @@ export default function TodosPanel({ pendingAction }) {
             <Repeat size={14} /> Repeat
           </button>
           {recurrencePanelFor === 'new' && (
-            <RecurrencePanel
-              recurrence={newRecurrence}
-              onChange={setNewRecurrence}
-              onClose={() => setRecurrencePanelFor(null)}
-            />
+            <RecurrencePanel recurrence={newRecurrence} onChange={setNewRecurrence} onClose={() => setRecurrencePanelFor(null)} />
           )}
         </div>
 
@@ -233,116 +221,109 @@ export default function TodosPanel({ pendingAction }) {
 
       <div className="flex flex-col gap-1.5">
         {filtered.length === 0 && (
-          <p className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>
-            Nothing here.
-          </p>
+          <p className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>Nothing here.</p>
         )}
         {filtered.map((t) => (
-          <div
-            key={t.id}
-            className="relative flex items-center gap-3 px-3 py-2.5 rounded-md group"
-            style={{
-              background: 'var(--panel)',
-              border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
-            }}
-          >
-            <button
-              onClick={() => toggle(t.id)}
-              className="w-5 h-5 shrink-0 rounded flex items-center justify-center transition-colors"
-              style={{
-                border: `1.5px solid ${t.done ? 'var(--accent)' : 'var(--line)'}`,
-                background: t.done ? 'var(--accent)' : 'transparent',
-              }}
+          <div key={t.id}>
+            <div
+              className="relative flex items-center gap-3 px-3 py-2.5 rounded-md group"
+              style={{ background: 'var(--panel)', border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)' }}
             >
-              {t.done && <Check size={13} color="#0d1210" />}
-            </button>
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: priorityColor[t.priority] }}
-            />
-            <span
-              className="flex-1 text-sm flex items-center gap-1.5"
-              style={{
-                color: t.done ? 'var(--text-dim)' : 'var(--text)',
-                textDecoration: t.done ? 'line-through' : 'none',
-              }}
-            >
-              {t.text}
-              {t.recurrence?.enabled && <Repeat size={11} color="var(--text-dim)" title="Repeats" />}
-            </span>
-
-            <div className="relative">
               <button
-                onClick={() => setRecurrencePanelFor(recurrencePanelFor === t.id ? null : t.id)}
-                className={t.recurrence?.enabled ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                style={{ color: t.recurrence?.enabled ? 'var(--accent)' : 'var(--text-dim)' }}
-                title="Repeat settings"
+                onClick={() => toggle(t.id)}
+                className="w-5 h-5 shrink-0 rounded flex items-center justify-center transition-colors"
+                style={{ border: `1.5px solid ${t.done ? 'var(--accent)' : 'var(--line)'}`, background: t.done ? 'var(--accent)' : 'transparent' }}
               >
-                <Repeat size={14} />
+                {t.done && <Check size={13} color="#0d1210" />}
               </button>
-              {recurrencePanelFor === t.id && (
-                <RecurrencePanel
-                  recurrence={t.recurrence || defaultRecurrence()}
-                  onChange={(r) => updateRecurrence(t.id, r)}
-                  onClose={() => setRecurrencePanelFor(null)}
-                />
-              )}
+              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: priorityColor[t.priority] }} />
+              <button
+                onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                className="flex-1 text-sm flex items-center gap-1.5 text-left"
+                style={{ color: t.done ? 'var(--text-dim)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none' }}
+              >
+                {t.text}
+                {t.recurrence?.enabled && <Repeat size={11} color="var(--text-dim)" title="Repeats" />}
+                {(t.links || []).length > 0 && <Link2 size={11} color="var(--accent)" title="Linked" />}
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setLinkPickerFor(t.id)}
+                  className={(t.links || []).length > 0 ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+                  style={{ color: (t.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}
+                  title="Link items"
+                >
+                  <Link2 size={14} />
+                </button>
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setRecurrencePanelFor(recurrencePanelFor === t.id ? null : t.id)}
+                  className={t.recurrence?.enabled ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+                  style={{ color: t.recurrence?.enabled ? 'var(--accent)' : 'var(--text-dim)' }}
+                  title="Repeat settings"
+                >
+                  <Repeat size={14} />
+                </button>
+                {recurrencePanelFor === t.id && (
+                  <RecurrencePanel
+                    recurrence={t.recurrence || defaultRecurrence()}
+                    onChange={(r) => updateRecurrence(t.id, r)}
+                    onClose={() => setRecurrencePanelFor(null)}
+                  />
+                )}
+              </div>
+
+              <button
+                onClick={() => togglePin(t.id)}
+                className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
+                style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
+              >
+                {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+              </button>
+              <button
+                onClick={() => remove(t.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-dim)' }}
+              >
+                <Trash2 size={15} />
+              </button>
             </div>
 
-            <button
-              onClick={() => togglePin(t.id)}
-              className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-              style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-            >
-              {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
-            </button>
-            <button
-              onClick={() => remove(t.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ color: 'var(--text-dim)' }}
-            >
-              <Trash2 size={15} />
-            </button>
+            {expandedId === t.id && (t.links || []).length > 0 && (
+              <div className="px-3 pt-1.5 pb-1">
+                <LinkedItems type="todo" id={t.id} links={t.links} goTo={goTo} />
+              </div>
+            )}
+
+            {linkPickerFor === t.id && (
+              <LinkPicker
+                excludeType="todo"
+                excludeId={t.id}
+                existingLinks={t.links}
+                onConfirm={(selected) => saveLinks(t.id, selected)}
+                onClose={() => setLinkPickerFor(null)}
+              />
+            )}
           </div>
         ))}
       </div>
 
       {confirmClear && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0, 0, 0, 0.55)' }}
-        >
-          <div
-            className="w-full max-w-sm rounded-xl p-6"
-            style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0, 0, 0, 0.55)' }}>
+          <div className="w-full max-w-sm rounded-xl p-6" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-display text-lg" style={{ color: 'var(--text)' }}>
-                Clear all completed to-dos?
-              </h3>
-              <button onClick={() => setConfirmClear(false)} style={{ color: 'var(--text-dim)' }}>
-                <X size={18} />
-              </button>
+              <h3 className="font-display text-lg" style={{ color: 'var(--text)' }}>Clear all completed to-dos?</h3>
+              <button onClick={() => setConfirmClear(false)} style={{ color: 'var(--text-dim)' }}><X size={18} /></button>
             </div>
             <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>
-              This will remove all completed to-dos from your list. They'll be moved to Recently
-              Deleted, so you can still restore them afterward.
+              This will remove all completed to-dos from your list. They'll be moved to Recently Deleted, so you can still restore them afterward.
             </p>
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirmClear(false)}
-                className="rounded-md px-4 py-2 text-sm"
-                style={{ color: 'var(--text-dim)', border: '1px solid var(--line)' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={clearCompleted}
-                className="rounded-md px-4 py-2 text-sm font-medium"
-                style={{ background: 'var(--coral)', color: '#fff' }}
-              >
-                Clear Completed
-              </button>
+              <button onClick={() => setConfirmClear(false)} className="rounded-md px-4 py-2 text-sm" style={{ color: 'var(--text-dim)', border: '1px solid var(--line)' }}>Cancel</button>
+              <button onClick={clearCompleted} className="rounded-md px-4 py-2 text-sm font-medium" style={{ background: 'var(--coral)', color: '#fff' }}>Clear Completed</button>
             </div>
           </div>
         </div>

@@ -1,9 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Search, Pin, PinOff, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Search, Pin, PinOff, GripVertical, Link2 } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 import { ensureBlocks, blocksToPlainText, newBlock } from './noteBlocks'
 import SlashMenu from './SlashMenu'
+import LinkPicker from './LinkPicker'
+import LinkedItems from './LinkedItems'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -20,12 +22,13 @@ const BLOCK_STYLE = {
   todo: 'text-[15px]',
 }
 
-export default function NotesPanel({ pendingAction }) {
+export default function NotesPanel({ pendingAction, goTo }) {
   const { notes, setNotes, softDelete, restoreItem } = useData()
   const { showToast } = useToast()
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
   const [slashMenu, setSlashMenu] = useState(null)
+  const [showLinkPicker, setShowLinkPicker] = useState(false)
 
   const titleInputRef = useRef(null)
   const blockRefs = useRef({})
@@ -35,24 +38,18 @@ export default function NotesPanel({ pendingAction }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const list = q
-      ? notes.filter(
-          (n) => n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)
-        )
+      ? notes.filter((n) => n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q))
       : notes
     return [...list].sort((a, b) => b.updatedAt - a.updatedAt)
   }, [notes, query])
 
   const activeRaw = notes.find((n) => n.id === activeId) || null
-  const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw) } : null
+  const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw), links: activeRaw.links || [] } : null
 
   function createNote() {
     const note = {
-      id: uid(),
-      title: 'Untitled note',
-      body: '',
-      blocks: [newBlock('paragraph', '')],
-      updatedAt: Date.now(),
-      isPinned: false,
+      id: uid(), title: 'Untitled note', body: '', blocks: [newBlock('paragraph', '')],
+      updatedAt: Date.now(), isPinned: false, links: [],
     }
     setNotes([note, ...notes])
     setActiveId(note.id)
@@ -60,11 +57,7 @@ export default function NotesPanel({ pendingAction }) {
   }
 
   function persistBlocks(id, blocks) {
-    setNotes(
-      notes.map((n) =>
-        n.id === id ? { ...n, blocks, body: blocksToPlainText(blocks), updatedAt: Date.now() } : n
-      )
-    )
+    setNotes(notes.map((n) => (n.id === id ? { ...n, blocks, body: blocksToPlainText(blocks), updatedAt: Date.now() } : n)))
   }
 
   function updateTitle(id, title) {
@@ -82,10 +75,7 @@ export default function NotesPanel({ pendingAction }) {
       setSlashMenu({
         blockId,
         filter: text.slice(1),
-        position: {
-          top: (rect?.top || 0) - (containerRect?.top || 0) + (el?.offsetHeight || 24) + 4,
-          left: 0,
-        },
+        position: { top: (rect?.top || 0) - (containerRect?.top || 0) + (el?.offsetHeight || 24) + 4, left: 0 },
       })
     } else if (slashMenu?.blockId === blockId) {
       setSlashMenu(null)
@@ -94,9 +84,7 @@ export default function NotesPanel({ pendingAction }) {
 
   function applySlashCommand(type) {
     if (!slashMenu) return
-    const blocks = active.blocks.map((b) =>
-      b.id === slashMenu.blockId ? { ...b, type, text: '' } : b
-    )
+    const blocks = active.blocks.map((b) => (b.id === slashMenu.blockId ? { ...b, type, text: '' } : b))
     persistBlocks(active.id, blocks)
     setSlashMenu(null)
     requestAnimationFrame(() => blockRefs.current[slashMenu.blockId]?.focus())
@@ -131,6 +119,12 @@ export default function NotesPanel({ pendingAction }) {
     } catch {
       showToast('Failed to update favorite. Please try again.')
     }
+  }
+
+  function saveLinks(selected) {
+    setNotes(notes.map((n) => (n.id === active.id ? { ...n, links: selected, updatedAt: Date.now() } : n)))
+    setShowLinkPicker(false)
+    showToast('Links updated.')
   }
 
   function deleteNote(id) {
@@ -228,6 +222,13 @@ export default function NotesPanel({ pendingAction }) {
               </span>
               <div className="flex items-center gap-1">
                 <button
+                  onClick={() => setShowLinkPicker(true)}
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
+                  style={{ color: active.links.length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}
+                >
+                  <Link2 size={14} /> Link
+                </button>
+                <button
                   onClick={() => togglePin(active.id)}
                   className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
                   style={{ color: active.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
@@ -251,17 +252,15 @@ export default function NotesPanel({ pendingAction }) {
                 value={active.title}
                 onChange={(e) => updateTitle(active.id, e.target.value)}
                 placeholder="Untitled note"
-                className="font-display text-3xl bg-transparent outline-none mb-2"
+                className="font-display text-3xl bg-transparent outline-none mb-1"
                 style={{ color: 'var(--text)' }}
               />
 
+              <LinkedItems type="note" id={active.id} links={active.links} goTo={goTo} />
+
               {active.blocks.map((block) => (
-                <div key={block.id} className="group flex items-start gap-2">
-                  <GripVertical
-                    size={14}
-                    className="opacity-0 group-hover:opacity-40 mt-1.5 shrink-0"
-                    color="var(--text-dim)"
-                  />
+                <div key={block.id} className="group flex items-start gap-2 mt-2">
+                  <GripVertical size={14} className="opacity-0 group-hover:opacity-40 mt-1.5 shrink-0" color="var(--text-dim)" />
 
                   {block.type === 'divider' ? (
                     <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
@@ -270,12 +269,7 @@ export default function NotesPanel({ pendingAction }) {
                       {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
                       {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
                       {block.type === 'todo' && (
-                        <input
-                          type="checkbox"
-                          checked={!!block.checked}
-                          onChange={() => toggleTodoBlock(block.id)}
-                          className="mt-1.5"
-                        />
+                        <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />
                       )}
                       <textarea
                         ref={(el) => (blockRefs.current[block.id] = el)}
@@ -319,6 +313,16 @@ export default function NotesPanel({ pendingAction }) {
           <div className="flex-1 flex items-center justify-center">
             <p style={{ color: 'var(--text-dim)' }}>Select a note, or create a new one.</p>
           </div>
+        )}
+
+        {showLinkPicker && active && (
+          <LinkPicker
+            excludeType="note"
+            excludeId={active.id}
+            existingLinks={active.links}
+            onConfirm={saveLinks}
+            onClose={() => setShowLinkPicker(false)}
+          />
         )}
       </div>
     </div>

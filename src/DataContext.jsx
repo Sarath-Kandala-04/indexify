@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { noteToMarkdown, markdownToNote } from './markdownSerializer'
-import { toCsv, fromCsv, TODO_JSON_FIELDS } from './csvSerializer'
+import {
+  toCsv, fromCsv, TODO_JSON_FIELDS, EXPENSE_JSON_FIELDS, SUBSCRIPTION_JSON_FIELDS,
+} from './csvSerializer'
 
 const DataContext = createContext(null)
 
@@ -23,8 +25,8 @@ export function DataProvider({ children, folderPath }) {
       }
       setNotesState(result.notes.map(markdownToNote))
       setTodosState(fromCsv(result.todosCsv, TODO_JSON_FIELDS))
-      setExpensesState(fromCsv(result.expensesCsv))
-      setSubscriptionsState(fromCsv(result.subscriptionsCsv))
+      setExpensesState(fromCsv(result.expensesCsv, EXPENSE_JSON_FIELDS))
+      setSubscriptionsState(fromCsv(result.subscriptionsCsv, SUBSCRIPTION_JSON_FIELDS))
       setDeletedState(result.meta?.deleted || [])
       setLoaded(true)
     }
@@ -41,10 +43,9 @@ export function DataProvider({ children, folderPath }) {
   )
 
   const setNotes = useCallback(
-    async (updater) => {
+    (updater) => {
       setNotesState((current) => {
         const next = typeof updater === 'function' ? updater(current) : updater
-        // Write only changed/removed notes rather than rewriting everything.
         const currentIds = new Set(current.map((n) => n.id))
         const nextIds = new Set(next.map((n) => n.id))
         next.forEach((note) => {
@@ -61,44 +62,35 @@ export function DataProvider({ children, folderPath }) {
     [folderPath]
   )
 
-  function writeCsvModule(name, rows, jsonFields = []) {
+  function writeCsvModule(name, rows, jsonFields) {
     window.indexifyFS.writeCsv(folderPath, name, toCsv(rows, jsonFields)).then((r) => {
       if (!r.ok) setLastError('Unable to save changes. Please try again.')
     })
   }
 
-  const setTodos = useCallback(
-    (updater) => {
-      setTodosState((current) => {
-        const next = typeof updater === 'function' ? updater(current) : updater
-        writeCsvModule('todos.csv', next, TODO_JSON_FIELDS)
-        return next
-      })
-    },
-    [folderPath]
-  )
+  const setTodos = useCallback((updater) => {
+    setTodosState((current) => {
+      const next = typeof updater === 'function' ? updater(current) : updater
+      writeCsvModule('todos.csv', next, TODO_JSON_FIELDS)
+      return next
+    })
+  }, [folderPath])
 
-  const setExpenses = useCallback(
-    (updater) => {
-      setExpensesState((current) => {
-        const next = typeof updater === 'function' ? updater(current) : updater
-        writeCsvModule('expenses.csv', next)
-        return next
-      })
-    },
-    [folderPath]
-  )
+  const setExpenses = useCallback((updater) => {
+    setExpensesState((current) => {
+      const next = typeof updater === 'function' ? updater(current) : updater
+      writeCsvModule('expenses.csv', next, EXPENSE_JSON_FIELDS)
+      return next
+    })
+  }, [folderPath])
 
-  const setSubscriptions = useCallback(
-    (updater) => {
-      setSubscriptionsState((current) => {
-        const next = typeof updater === 'function' ? updater(current) : updater
-        writeCsvModule('subscriptions.csv', next)
-        return next
-      })
-    },
-    [folderPath]
-  )
+  const setSubscriptions = useCallback((updater) => {
+    setSubscriptionsState((current) => {
+      const next = typeof updater === 'function' ? updater(current) : updater
+      writeCsvModule('subscriptions.csv', next, SUBSCRIPTION_JSON_FIELDS)
+      return next
+    })
+  }, [folderPath])
 
   const collections = {
     note: [notes, setNotes],
@@ -125,10 +117,7 @@ export function DataProvider({ children, folderPath }) {
     const [list, setList] = target
     const idsToRemove = new Set(items.map((i) => i.id))
     const deletedEntries = items.map((item) => ({
-      id: `${type}:${item.id}`,
-      type,
-      data: item,
-      deletedAt: Date.now(),
+      id: `${type}:${item.id}`, type, data: item, deletedAt: Date.now(),
     }))
     setList(list.filter((i) => !idsToRemove.has(i.id)))
     const nextDeleted = [...deletedEntries, ...deleted]
@@ -168,6 +157,24 @@ export function DataProvider({ children, folderPath }) {
     return true
   }
 
+  // v2.3.0 uses this to merge an imported folder's data into the live state.
+  function importMergedData({ notes: impNotes, todos: impTodos, expenses: impExpenses, subscriptions: impSubs, deletedItems: impDeleted }) {
+    function mergeById(current, incoming) {
+      const map = new Map(current.map((i) => [i.id, i]))
+      incoming.forEach((i) => map.set(i.id, i)) // imported wins on conflict
+      return Array.from(map.values())
+    }
+    if (impNotes) setNotes(mergeById(notes, impNotes))
+    if (impTodos) setTodos(mergeById(todos, impTodos))
+    if (impExpenses) setExpenses(mergeById(expenses, impExpenses))
+    if (impSubs) setSubscriptions(mergeById(subscriptions, impSubs))
+    if (impDeleted) {
+      const nextDeleted = mergeById(deleted, impDeleted)
+      setDeletedState(nextDeleted)
+      persistMeta(nextDeleted)
+    }
+  }
+
   const value = {
     notes, setNotes,
     todos, setTodos,
@@ -175,7 +182,8 @@ export function DataProvider({ children, folderPath }) {
     subscriptions, setSubscriptions,
     deleted,
     softDelete, softDeleteMany, restoreItem, permanentlyDeleteItem, emptyDeleted,
-    loaded, lastError,
+    importMergedData,
+    loaded, lastError, folderPath,
   }
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>

@@ -1,11 +1,9 @@
 import Papa from 'papaparse'
 
-// Fields listed here are objects (e.g. recurrence) — stored as JSON text in
-// their own CSV cell, and parsed back into real objects on read.
 const JSON_FIELDS = {
-  todos: ['recurrence'],
-  expenses: [],
-  subscriptions: [],
+  todos: ['recurrence', 'links'],
+  expenses: ['links'],
+  subscriptions: ['links'],
 }
 
 export function toCsv(rows, jsonFields = []) {
@@ -24,7 +22,6 @@ export function fromCsv(csvString, jsonFields = []) {
   const { data } = Papa.parse(csvString, { header: true, skipEmptyLines: true })
   return data.map((row) => {
     const copy = { ...row }
-    // Papaparse gives everything as strings — restore real types.
     if ('done' in copy) copy.done = copy.done === 'true'
     if ('isPinned' in copy) copy.isPinned = copy.isPinned === 'true'
     if ('amount' in copy) copy.amount = Number(copy.amount)
@@ -35,8 +32,10 @@ export function fromCsv(csvString, jsonFields = []) {
         try {
           copy[f] = JSON.parse(copy[f])
         } catch {
-          copy[f] = undefined
+          copy[f] = f === 'links' ? [] : undefined
         }
+      } else if (f === 'links') {
+        copy[f] = []
       }
     })
     return copy
@@ -44,3 +43,5 @@ export function fromCsv(csvString, jsonFields = []) {
 }
 
 export const TODO_JSON_FIELDS = JSON_FIELDS.todos
+export const EXPENSE_JSON_FIELDS = JSON_FIELDS.expenses
+export const SUBSCRIPTION_JSON_FIELDS = JSON_FIELDS.subscriptions

@@ -2,6 +2,16 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.1.0] - Cross-Module Linking
+
+### Added
+- "Link" action on Notes, To-dos, Expenses, and Subscriptions — link any item to any other item across any module.
+- Linked Items section shown on each item, listing both items it links to and items that link back to it (backlinks), each clickable and navigating to the right module/item.
+- Links stored as `links: [{type, id}]` in each item's own data (frontmatter for notes, a JSON cell in CSV for the other three).
+
+### Notes
+- Links persist through Recently Deleted/Restore automatically since they're just another field on the item.
+
 ## [2.0.0] - File-Based Storage
 
 ### Added
