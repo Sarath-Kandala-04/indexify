@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Check,
   Trash2,
+  Waypoints,
 } from 'lucide-react'
 
 import HomePanel from './HomePanel'
@@ -17,6 +18,7 @@ import TodosPanel from './TodosPanel'
 import ExpensesPanel from './ExpensesPanel'
 import SubscriptionsPanel from './SubscriptionsPanel'
 import RecentlyDeletedPanel from './RecentlyDeletedPanel'
+import GraphView from './GraphView'
 import Clock from './Clock'
 import { useTheme } from './useTheme'
 import { useAccent, ACCENT_OPTIONS } from './useAccent'
@@ -191,9 +193,6 @@ export default function App() {
     setPendingAction({ type, id: Date.now() + Math.random() })
   }, [])
 
-  // Shared navigation used by Home's Favorites/Search AND by any panel's
-  // Linked Items — switches tab and optionally dispatches an action so the
-  // destination panel can open or highlight the specific item.
   const goToItem = useCallback((tabId, action) => {
     setTab(tabId)
     if (action) {
@@ -255,6 +254,20 @@ export default function App() {
           )
         })}
 
+        <button
+          onClick={() => setTab('graph')}
+          title="Graph"
+          className={
+            'w-11 h-11 rounded-md flex items-center justify-center relative transition-colors ' +
+            (tab === 'graph' ? 'bg-[var(--panel-2)]' : 'bg-transparent hover:bg-[var(--panel-2)]')
+          }
+        >
+          {tab === 'graph' && (
+            <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+          )}
+          <Waypoints size={19} color={tab === 'graph' ? 'var(--accent)' : 'var(--text-dim)'} />
+        </button>
+
         <div className="flex-1" />
 
         <button
@@ -284,6 +297,7 @@ export default function App() {
         {tab === 'todos' && <TodosPanel pendingAction={pendingAction} goTo={goToItem} />}
         {tab === 'expenses' && <ExpensesPanel pendingAction={pendingAction} goTo={goToItem} />}
         {tab === 'subscriptions' && <SubscriptionsPanel pendingAction={pendingAction} goTo={goToItem} />}
+        {tab === 'graph' && <GraphView goTo={goToItem} />}
         {tab === 'deleted' && <RecentlyDeletedPanel />}
       </main>
     </div>

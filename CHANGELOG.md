@@ -2,6 +2,18 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.2.0] - Graph View
+
+### Added
+- New "Graph" sidebar tab visualizing links between Notes, To-dos, Expenses, and Subscriptions (from v2.1.0's linking system) as an interactive node graph.
+- Nodes color-coded by type; hover to see the label, click to navigate to that item.
+- Only linked items appear in the graph — unlinked items are omitted to keep it readable.
+- Empty state shown when nothing is linked yet.
+
+### Notes
+- Layout re-computes each time the graph is opened or link data changes; node positions are not currently persisted or draggable (candidate for a future refinement).
+- No new dependencies — uses a small self-contained force-layout algorithm rendered on canvas.
+
 ## [2.1.0] - Cross-Module Linking
 
 ### Added
