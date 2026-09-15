@@ -73,7 +73,7 @@ ipcMain.handle('fs:choose-folder', async () => {
     })
     if (result.canceled || result.filePaths.length === 0) return null
     const folderPath = result.filePaths[0]
-    await fs.mkdir(path.join(folderPath, 'notes'), { recursive: true })
+    await fs.mkdir(path.join(folderPath, 'notes', 'attachments'), { recursive: true })
     const cfg = readConfig()
     cfg.dataFolder = folderPath
     writeConfig(cfg)
@@ -181,6 +181,20 @@ ipcMain.handle('fs:write-meta', async (event, folderPath, metaObject) => {
     return { ok: true }
   } catch (err) {
     console.error('write-meta failed:', err)
+    return { ok: false, error: String(err) }
+  }
+})
+
+// base64Data is a data-URL-stripped base64 string; filename should already be unique.
+ipcMain.handle('fs:write-attachment', async (event, folderPath, filename, base64Data) => {
+  try {
+    const attachDir = path.join(folderPath, 'notes', 'attachments')
+    await fs.mkdir(attachDir, { recursive: true })
+    const buffer = Buffer.from(base64Data, 'base64')
+    await fs.writeFile(path.join(attachDir, filename), buffer)
+    return { ok: true, relativePath: `attachments/${filename}` }
+  } catch (err) {
+    console.error('write-attachment failed:', err)
     return { ok: false, error: String(err) }
   }
 })

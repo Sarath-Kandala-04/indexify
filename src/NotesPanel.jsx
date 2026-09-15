@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, Search, Pin, PinOff, GripVertical, Link2 } from 'lucide-react'
+import { Plus, Trash2, Search, Pin, PinOff, GripVertical, Link2, File as FileIcon } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 import { ensureBlocks, blocksToPlainText, newBlock } from './noteBlocks'
@@ -22,13 +22,28 @@ const BLOCK_STYLE = {
   todo: 'text-[15px]',
 }
 
+const AUDIO_EXT = ['mp3', 'wav', 'ogg', 'm4a']
+const VIDEO_EXT = ['mp4', 'webm', 'mov']
+
+function fileUrl(folderPath, relativePath) {
+  const normalized = (folderPath || '').replace(/\\/g, '/')
+  return `file:///${normalized}/notes/${relativePath}`
+}
+
+function resizeTextarea(el) {
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
 export default function NotesPanel({ pendingAction, goTo }) {
-  const { notes, setNotes, softDelete, restoreItem } = useData()
+  const { notes, setNotes, softDelete, restoreItem, folderPath } = useData()
   const { showToast } = useToast()
   const [activeId, setActiveId] = useState(null)
   const [query, setQuery] = useState('')
   const [slashMenu, setSlashMenu] = useState(null)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
+  const [draggedId, setDraggedId] = useState(null)
 
   const titleInputRef = useRef(null)
   const blockRefs = useRef({})
@@ -43,6 +58,12 @@ export default function NotesPanel({ pendingAction, goTo }) {
 
   const activeRaw = notes.find((n) => n.id === activeId) || null
   const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw), links: activeRaw.links || [] } : null
+
+  // Auto-grow every block textarea whenever the active note's blocks change.
+  useEffect(() => {
+    if (!active) return
+    active.blocks.forEach((b) => resizeTextarea(blockRefs.current[b.id]))
+  }, [active?.blocks])
 
   function createNote() {
     const note = { id: uid(), title: 'Untitled note', body: '', blocks: [newBlock('paragraph', '')], updatedAt: Date.now(), isPinned: false, links: [] }
@@ -59,11 +80,12 @@ export default function NotesPanel({ pendingAction, goTo }) {
     setNotes(notes.map((n) => (n.id === id ? { ...n, title, updatedAt: Date.now() } : n)))
   }
 
-  function updateBlockText(blockId, text) {
+  function updateBlockText(blockId, text, el) {
+    resizeTextarea(el)
     const blocks = active.blocks.map((b) => (b.id === blockId ? { ...b, text } : b))
     persistBlocks(active.id, blocks)
+
     if (text.startsWith('/')) {
-      const el = blockRefs.current[blockId]
       const rect = el?.getBoundingClientRect()
       const containerRect = el?.closest('.notes-editor-scroll')?.getBoundingClientRect()
       setSlashMenu({
@@ -89,18 +111,67 @@ export default function NotesPanel({ pendingAction, goTo }) {
     persistBlocks(active.id, blocks)
   }
 
-  function addBlockAfter(blockId) {
+  function addBlockAfter(blockId, focusNew = true) {
     const idx = active.blocks.findIndex((b) => b.id === blockId)
     const fresh = newBlock('paragraph', '')
     const blocks = [...active.blocks]
     blocks.splice(idx + 1, 0, fresh)
     persistBlocks(active.id, blocks)
+    if (focusNew) requestAnimationFrame(() => blockRefs.current[fresh.id]?.focus())
+    return fresh
+  }
+
+  function addBlockAtEnd() {
+    const fresh = newBlock('paragraph', '')
+    persistBlocks(active.id, [...active.blocks, fresh])
     requestAnimationFrame(() => blockRefs.current[fresh.id]?.focus())
   }
 
   function removeBlock(blockId) {
     if (active.blocks.length <= 1) return
     persistBlocks(active.id, active.blocks.filter((b) => b.id !== blockId))
+  }
+
+  function reorderBlocks(fromId, toId) {
+    if (fromId === toId) return
+    const blocks = [...active.blocks]
+    const fromIdx = blocks.findIndex((b) => b.id === fromId)
+    const toIdx = blocks.findIndex((b) => b.id === toId)
+    if (fromIdx === -1 || toIdx === -1) return
+    const [moved] = blocks.splice(fromIdx, 1)
+    blocks.splice(toIdx, 0, moved)
+    persistBlocks(active.id, blocks)
+  }
+
+  async function handlePasteOnBlock(e, blockId) {
+    const items = Array.from(e.clipboardData?.items || [])
+    const fileItem = items.find((i) => i.kind === 'file')
+    if (!fileItem) return // plain text paste — let default behavior happen
+
+    e.preventDefault()
+    const file = fileItem.getAsFile()
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1]
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+      const filename = `${uid()}.${ext}`
+      const result = await window.indexifyFS.writeAttachment(folderPath, filename, base64)
+      if (!result.ok) {
+        showToast('Failed to attach file. Please try again.')
+        return
+      }
+      const isImage = file.type.startsWith('image/')
+      const blockType = isImage ? 'image' : 'file'
+      const idx = active.blocks.findIndex((b) => b.id === blockId)
+      const newB = { ...newBlock(blockType, result.relativePath), fileName: file.name }
+      const blocks = [...active.blocks]
+      blocks.splice(idx + 1, 0, newB)
+      persistBlocks(active.id, blocks)
+      showToast(isImage ? 'Image added.' : 'File attached.')
+    }
+    reader.readAsDataURL(file)
   }
 
   function togglePin(id) {
@@ -201,35 +272,66 @@ export default function NotesPanel({ pendingAction, goTo }) {
               </div>
             </div>
 
-            <div className="notes-editor-scroll flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-3 relative">
+            <div className="notes-editor-scroll flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-1 relative">
               <input ref={titleInputRef} value={active.title} onChange={(e) => updateTitle(active.id, e.target.value)} placeholder="Untitled note" className="font-display text-3xl bg-transparent outline-none mb-1" style={{ color: 'var(--text)' }} />
               <LinkedItems type="note" id={active.id} links={active.links} goTo={goTo} />
 
               {active.blocks.map((block) => (
-                <div key={block.id} className="group flex items-start gap-2 mt-2">
-                  <GripVertical size={14} className="opacity-0 group-hover:opacity-40 mt-1.5 shrink-0" color="var(--text-dim)" />
+                <div
+                  key={block.id}
+                  className="group flex items-start gap-2 mt-2 rounded"
+                  style={{ background: draggedId === block.id ? 'var(--panel-2)' : 'transparent' }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => { reorderBlocks(draggedId, block.id); setDraggedId(null) }}
+                >
+                  <span
+                    draggable
+                    onDragStart={() => setDraggedId(block.id)}
+                    onDragEnd={() => setDraggedId(null)}
+                    className="cursor-grab opacity-0 group-hover:opacity-40 mt-1.5 shrink-0"
+                  >
+                    <GripVertical size={14} color="var(--text-dim)" />
+                  </span>
+
                   {block.type === 'divider' ? (
                     <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
+                  ) : block.type === 'image' ? (
+                    <img src={fileUrl(folderPath, block.text)} alt="" className="max-w-full rounded-md" style={{ border: '1px solid var(--line)' }} />
+                  ) : block.type === 'file' ? (
+                    (() => {
+                      const ext = (block.text.split('.').pop() || '').toLowerCase()
+                      if (AUDIO_EXT.includes(ext)) return <audio controls src={fileUrl(folderPath, block.text)} className="flex-1" />
+                      if (VIDEO_EXT.includes(ext)) return <video controls src={fileUrl(folderPath, block.text)} className="max-w-full rounded-md" />
+                      return (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md text-sm" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
+                          <FileIcon size={14} color="var(--accent)" /> {block.fileName || block.text}
+                        </div>
+                      )
+                    })()
                   ) : (
                     <>
                       {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
                       {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
                       {block.type === 'todo' && <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />}
                       <textarea
-                        ref={(el) => (blockRefs.current[block.id] = el)}
+                        ref={(el) => { blockRefs.current[block.id] = el; resizeTextarea(el) }}
                         value={block.text}
-                        onChange={(e) => updateBlockText(block.id, e.target.value)}
+                        onChange={(e) => updateBlockText(block.id, e.target.value, e.target)}
+                        onPaste={(e) => handlePasteOnBlock(e, block.id)}
                         onKeyDown={(e) => {
                           if (slashMenu?.blockId === block.id) return
-                          if (e.key === 'Enter' && !e.shiftKey) {
+                          if (e.key === 'Enter' && e.shiftKey) {
+                            return // let the newline insert normally, stay in this block
+                          }
+                          if (e.key === 'Enter') {
                             e.preventDefault()
-                            addBlockAfter(block.id)
+                            e.target.blur() // Enter commits/exits — no new block, no newline
                           } else if (e.key === 'Backspace' && block.text === '') {
                             e.preventDefault()
                             removeBlock(block.id)
                           }
                         }}
-                        placeholder={block.type === 'paragraph' ? "Start writing, or type '/' for commands..." : ''}
+                        placeholder={block.type === 'paragraph' ? "Type, paste an image/file, or '/' for commands..." : ''}
                         rows={1}
                         className={`flex-1 bg-transparent outline-none resize-none overflow-hidden ${BLOCK_STYLE[block.type]}`}
                         style={{
@@ -242,6 +344,14 @@ export default function NotesPanel({ pendingAction, goTo }) {
                   )}
                 </div>
               ))}
+
+              <button
+                onClick={addBlockAtEnd}
+                className="flex items-center gap-1.5 text-xs mt-3 px-2 py-1.5 rounded-md self-start opacity-60 hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-dim)' }}
+              >
+                <Plus size={13} /> Add block
+              </button>
 
               {slashMenu && (
                 <SlashMenu filter={slashMenu.filter} position={slashMenu.position} onSelect={applySlashCommand} onClose={() => setSlashMenu(null)} />

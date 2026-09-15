@@ -9,4 +9,6 @@ contextBridge.exposeInMainWorld('indexifyFS', {
   deleteNoteFile: (folderPath, id) => ipcRenderer.invoke('fs:delete-note-file', folderPath, id),
   writeCsv: (folderPath, name, csvString) => ipcRenderer.invoke('fs:write-csv', folderPath, name, csvString),
   writeMeta: (folderPath, metaObject) => ipcRenderer.invoke('fs:write-meta', folderPath, metaObject),
+  writeAttachment: (folderPath, filename, base64Data) =>
+    ipcRenderer.invoke('fs:write-attachment', folderPath, filename, base64Data),
 })

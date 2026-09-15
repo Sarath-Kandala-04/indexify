@@ -12,6 +12,8 @@ function blockToMarkdown(block) {
     case 'todo': return `- [${block.checked ? 'x' : ' '}] ${block.text}`
     case 'quote': return `> ${block.text}`
     case 'divider': return `---`
+    case 'image': return `![](${block.text})`
+    case 'file': return `[${block.fileName || block.text}](${block.text})`
     default: return block.text || ''
   }
 }
@@ -24,6 +26,10 @@ function lineToBlock(line) {
     const checked = /^- \[[xX]\]/.test(line)
     return { ...newBlock('todo', line.replace(/^- \[[ xX]\] /, '')), checked }
   }
+  const imageMatch = line.match(/^!\[\]\((.+)\)$/)
+  if (imageMatch) return newBlock('image', imageMatch[1])
+  const fileMatch = line.match(/^\[(.+)\]\((attachments\/.+)\)$/)
+  if (fileMatch) return { ...newBlock('file', fileMatch[2]), fileName: fileMatch[1] }
   if (line.startsWith('- ')) return newBlock('bulleted', line.slice(2))
   if (/^\d+\.\s/.test(line)) return newBlock('numbered', line.replace(/^\d+\.\s/, ''))
   if (line.startsWith('> ')) return newBlock('quote', line.slice(2))

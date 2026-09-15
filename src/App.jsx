@@ -32,6 +32,12 @@ const SHORTCUTS = {
   e: { tab: 'expenses', action: 'new-expense' },
 }
 
+const THEME_OPTIONS = [
+  { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'system', label: 'System' },
+]
+
 function isTypingTarget(el) {
   if (!el) return false
   const tag = el.tagName
@@ -58,6 +64,7 @@ function SettingsMenu() {
   const wrapperRef = useRef(null)
   const fileInputRef = useRef(null)
 
+  const currentThemeLabel = THEME_OPTIONS.find((t) => t.id === theme)?.label || 'Dark'
   const currentAccentLabel = ACCENT_OPTIONS.find((a) => a.id === accent)?.label || 'Teal (Default)'
 
   useEffect(() => {
@@ -128,7 +135,7 @@ function SettingsMenu() {
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
               style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
             >
-              {theme === 'dark' ? 'Dark' : 'Light'}
+              {currentThemeLabel}
               <ChevronDown size={13} />
             </button>
             {themeOpen && (
@@ -136,24 +143,18 @@ function SettingsMenu() {
                 className="absolute top-full right-0 mt-1 w-28 rounded-md p-1 shadow-lg z-20"
                 style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
               >
-                <button
-                  type="button"
-                  onClick={() => { setTheme('dark'); setThemeOpen(false) }}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs"
-                  style={{ background: theme === 'dark' ? 'var(--panel-2)' : 'transparent', color: 'var(--text)' }}
-                >
-                  Dark
-                  {theme === 'dark' && <Check size={12} color="var(--accent)" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setTheme('light'); setThemeOpen(false) }}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs"
-                  style={{ background: theme === 'light' ? 'var(--panel-2)' : 'transparent', color: 'var(--text)' }}
-                >
-                  Light
-                  {theme === 'light' && <Check size={12} color="var(--accent)" />}
-                </button>
+                {THEME_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => { setTheme(option.id); setThemeOpen(false) }}
+                    className="w-full flex items-center justify-between px-2 py-1.5 rounded text-xs"
+                    style={{ background: theme === option.id ? 'var(--panel-2)' : 'transparent', color: 'var(--text)' }}
+                  >
+                    {option.label}
+                    {theme === option.id && <Check size={12} color="var(--accent)" />}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -194,28 +195,14 @@ function SettingsMenu() {
 
           <div className="my-1 border-t" style={{ borderColor: 'var(--line)' }} />
 
-          <button
-            onClick={handleExport}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm"
-            style={{ color: 'var(--text)' }}
-          >
+          <button onClick={handleExport} className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm" style={{ color: 'var(--text)' }}>
             <Download size={14} color="var(--accent)" /> Export Data (.zip)
           </button>
 
-          <button
-            onClick={handleImportClick}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm"
-            style={{ color: 'var(--text)' }}
-          >
+          <button onClick={handleImportClick} className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm" style={{ color: 'var(--text)' }}>
             <Upload size={14} color="var(--accent)" /> Import Data (.zip)
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".zip"
-            onChange={handleImportFile}
-            className="hidden"
-          />
+          <input ref={fileInputRef} type="file" accept=".zip" onChange={handleImportFile} className="hidden" />
         </div>
       )}
 

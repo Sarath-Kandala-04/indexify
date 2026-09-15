@@ -6,7 +6,7 @@ Indexify is a desktop application built with React and Electron, designed to man
 
 ## ✨ Features
 
-- 📝 **Notes** — Create, edit, search, and delete notes.
+- 📝 **Notes** — Rich block-based notes with headings, lists, to-dos, quotes, dividers, inline images, audio/video/file attachments, and drag-to-reorder blocks.
 - ✅ **Todos** — Keep track of tasks and things you need to get done.
 - 💰 **Expenses** — Track your personal expenses.
 - 🔄 **Subscriptions** — Keep track of recurring subscriptions.
@@ -21,11 +21,11 @@ Indexify is a desktop application built with React and Electron, designed to man
 
 The latest Windows installer is available from the GitHub Releases page.
 
-**Latest release:** [Indexify v1.8.0](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
+**Latest release:** [Indexify v2.3.1](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
 
 Download:
 
-`Indexify Setup 1.10.0.exe`
+`Indexify Setup 2.3.1.exe`
 
 > Windows may display a security warning because the application is currently not code-signed.
 
@@ -100,7 +100,7 @@ Uninstalling and reinstalling Indexify does not necessarily remove the applicati
 
 ## 📌 Status
 
-**Version:** 1.10.0
+**Version:** 2.3.1
 
 Indexify is currently a personal project and is actively being improved.
 

@@ -2,6 +2,33 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.3.1] - Notes Editor & Theme Fixes
+
+### Fixed
+- **Note editor line visibility bug**: multi-line note content was being written correctly but not displayed — the text block only rendered a single line of height, clipping everything beyond it. Blocks now auto-resize to fit their full content as you type.
+- **Enter / Shift+Enter behavior reversed**: Enter previously created a new block and Shift+Enter added a line break within the same block — the opposite of expected editor behavior. This is now corrected: Enter commits the current block and exits it; Shift+Enter inserts a new line and stays in the same block.
+
+### Added
+- **System theme option** in Settings, alongside Dark and Light — follows the OS's light/dark preference automatically and updates live if the OS setting changes.
+- **Paste support in notes**: pasting an image, audio file, video file, or other file directly into a note block now saves it into the data folder's `notes/attachments/` directory and inserts it inline (images render inline, audio/video get native players, other files show as a downloadable attachment block).
+- **Drag-to-reorder blocks**: each note block has a grip handle (visible on hover) that can be dragged to reorder blocks within the note, similar to Notion.
+- An explicit "Add block" control at the end of a note, for adding a new block without needing to press Enter from the last line.
+
+### Notes
+- No changes to the on-disk `.md`/`.csv` format's core structure — new `image`/`file` block types are written as standard Markdown image/link syntax (`![](path)` / `[name](path)`), so existing notes and the file format remain unaffected and backward compatible.
+
+## [2.3.0] - Export / Import + Undo Fix
+
+### Added
+- Export Data (.zip) and Import Data (.zip) in Settings — full backup/restore of Notes, To-dos, Expenses, Subscriptions, and Recently Deleted, using the same Markdown/CSV format as the on-disk data folder.
+- Import merges into existing data (imported item wins on id conflict) rather than overwriting everything.
+
+### Fixed
+- Undo after deleting a Note/To-do/Expense/Subscription now works reliably — previously the toast's Undo button could silently fail to restore the item due to a stale data reference; `DataContext` now always reads the live/current state.
+- Folder selection on first run now defensively re-verifies the saved folder still exists on disk before trusting it, and offers a "Start Fresh" option if migration of old data fails.
+- Removed `gray-matter` dependency (incompatible with the sandboxed renderer without extra polyfilling) in favor of a small hand-written frontmatter parser — same file format, no functional change to saved files.
+- Build no longer fails on Windows code-signing steps (`CSC_IDENTITY_AUTO_DISCOVERY=false`, `signAndEditExecutable: false`) when no signing certificate is configured.
+
 ## [2.2.0] - Graph View
 
 ### Added
