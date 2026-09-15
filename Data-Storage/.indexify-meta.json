@@ -1,0 +1,67 @@
+{
+  "deleted": [
+    {
+      "id": "note:mu27bzjb9gqsz",
+      "type": "note",
+      "data": {
+        "id": "mu27bzjb9gqsz",
+        "title": "Untitled note",
+        "body": "",
+        "blocks": [
+          {
+            "id": "mu27bzjb5o5ev",
+            "type": "paragraph",
+            "text": "",
+            "checked": false
+          }
+        ],
+        "updatedAt": 1789448329127,
+        "isPinned": false,
+        "links": []
+      },
+      "deletedAt": 1789448525249
+    },
+    {
+      "id": "todo:mtrk05cfa6k94",
+      "type": "todo",
+      "data": {
+        "id": "mtrk05cfa6k94",
+        "text": "Fill the Subscriptions",
+        "done": true,
+        "priority": "low",
+        "createdAt": 1788804483855,
+        "isPinned": false,
+        "dueDate": "2026-09-07",
+        "recurrence": {
+          "enabled": false,
+          "frequency": "daily",
+          "interval": 1,
+          "days": []
+        },
+        "links": []
+      },
+      "deletedAt": 1789448507593
+    },
+    {
+      "id": "note:mu15dobnmw1pz",
+      "type": "note",
+      "data": {
+        "id": "mu15dobnmw1pz",
+        "title": "Boom Shakalaka Shakalaka",
+        "body": "Baby Boom ShaKALAAKA",
+        "blocks": [
+          {
+            "id": "mu15dobnp6e2g",
+            "type": "bulleted",
+            "text": "Baby Boom ShaKALAAKA",
+            "checked": false
+          }
+        ],
+        "updatedAt": 1789384603883,
+        "isPinned": false,
+        "links": []
+      },
+      "deletedAt": 1789384614356
+    }
+  ]
+}

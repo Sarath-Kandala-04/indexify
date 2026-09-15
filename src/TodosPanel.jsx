@@ -43,13 +43,7 @@ export default function TodosPanel({ pendingAction, goTo }) {
   function addTodo(e) {
     e.preventDefault()
     if (!text.trim()) return
-    setTodos([
-      {
-        id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now(),
-        isPinned: false, dueDate: todayStr(), recurrence: newRecurrence, links: [],
-      },
-      ...todos,
-    ])
+    setTodos([{ id: uid(), text: text.trim(), done: false, priority, createdAt: Date.now(), isPinned: false, dueDate: todayStr(), recurrence: newRecurrence, links: [] }, ...todos])
     setText('')
     setPriority('normal')
     setNewRecurrence(defaultRecurrence())
@@ -144,48 +138,19 @@ export default function TodosPanel({ pendingAction, goTo }) {
       </div>
 
       <form onSubmit={addTodo} className="flex flex-wrap gap-2 mb-2 items-center relative">
-        <input
-          ref={textInputRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Add a task..."
-          className="flex-1 min-w-[160px] rounded-md px-3 py-2.5 text-sm outline-none"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        />
-        <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="rounded-md px-2 text-sm outline-none"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        >
+        <input ref={textInputRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="Add a task..." className="flex-1 min-w-[160px] rounded-md px-3 py-2.5 text-sm outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+        <select value={priority} onChange={(e) => setPriority(e.target.value)} className="rounded-md px-2 text-sm outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
           <option value="high">High</option>
           <option value="normal">Normal</option>
           <option value="low">Low</option>
         </select>
-
         <div className="relative">
-          <button
-            type="button"
-            onClick={() => setRecurrencePanelFor(recurrencePanelFor === 'new' ? null : 'new')}
-            className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm"
-            style={{
-              background: newRecurrence.enabled ? 'var(--panel-2)' : 'transparent',
-              border: '1px solid var(--line)',
-              color: newRecurrence.enabled ? 'var(--accent)' : 'var(--text-dim)',
-            }}
-          >
+          <button type="button" onClick={() => setRecurrencePanelFor(recurrencePanelFor === 'new' ? null : 'new')} className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm" style={{ background: newRecurrence.enabled ? 'var(--panel-2)' : 'transparent', border: '1px solid var(--line)', color: newRecurrence.enabled ? 'var(--accent)' : 'var(--text-dim)' }}>
             <Repeat size={14} /> Repeat
           </button>
-          {recurrencePanelFor === 'new' && (
-            <RecurrencePanel recurrence={newRecurrence} onChange={setNewRecurrence} onClose={() => setRecurrencePanelFor(null)} />
-          )}
+          {recurrencePanelFor === 'new' && <RecurrencePanel recurrence={newRecurrence} onChange={setNewRecurrence} onClose={() => setRecurrencePanelFor(null)} />}
         </div>
-
-        <button
-          type="submit"
-          className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-medium"
-          style={{ background: 'var(--accent)', color: '#0d1210' }}
-        >
+        <button type="submit" className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-sm font-medium" style={{ background: 'var(--accent)', color: '#0d1210' }}>
           <Plus size={16} /> Add
         </button>
       </form>
@@ -193,119 +158,55 @@ export default function TodosPanel({ pendingAction, goTo }) {
       <div className="flex items-center justify-between mb-5 mt-3">
         <div className="flex gap-1">
           {FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className="text-xs px-3 py-1.5 rounded-md transition-colors"
-              style={{
-                background: filter === f ? 'var(--panel-2)' : 'transparent',
-                color: filter === f ? 'var(--text)' : 'var(--text-dim)',
-                border: '1px solid var(--line)',
-              }}
-            >
+            <button key={f} onClick={() => setFilter(f)} className="text-xs px-3 py-1.5 rounded-md transition-colors" style={{ background: filter === f ? 'var(--panel-2)' : 'transparent', color: filter === f ? 'var(--text)' : 'var(--text-dim)', border: '1px solid var(--line)' }}>
               {f}
             </button>
           ))}
         </div>
-
         {completedTodos.length > 0 && (
-          <button
-            onClick={() => setConfirmClear(true)}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md"
-            style={{ color: 'var(--coral)' }}
-          >
+          <button onClick={() => setConfirmClear(true)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md" style={{ color: 'var(--coral)' }}>
             <CheckCheck size={14} /> Clear Completed
           </button>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {filtered.length === 0 && (
-          <p className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>Nothing here.</p>
-        )}
+        {filtered.length === 0 && <p className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>Nothing here.</p>}
         {filtered.map((t) => (
           <div key={t.id}>
-            <div
-              className="relative flex items-center gap-3 px-3 py-2.5 rounded-md group"
-              style={{ background: 'var(--panel)', border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)' }}
-            >
-              <button
-                onClick={() => toggle(t.id)}
-                className="w-5 h-5 shrink-0 rounded flex items-center justify-center transition-colors"
-                style={{ border: `1.5px solid ${t.done ? 'var(--accent)' : 'var(--line)'}`, background: t.done ? 'var(--accent)' : 'transparent' }}
-              >
+            <div className="relative flex items-center gap-3 px-3 py-2.5 rounded-md group" style={{ background: 'var(--panel)', border: t.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)' }}>
+              <button onClick={() => toggle(t.id)} className="w-5 h-5 shrink-0 rounded flex items-center justify-center transition-colors" style={{ border: `1.5px solid ${t.done ? 'var(--accent)' : 'var(--line)'}`, background: t.done ? 'var(--accent)' : 'transparent' }}>
                 {t.done && <Check size={13} color="#0d1210" />}
               </button>
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: priorityColor[t.priority] }} />
-              <button
-                onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                className="flex-1 text-sm flex items-center gap-1.5 text-left"
-                style={{ color: t.done ? 'var(--text-dim)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none' }}
-              >
+              <button onClick={() => setExpandedId(expandedId === t.id ? null : t.id)} className="flex-1 text-sm flex items-center gap-1.5 text-left" style={{ color: t.done ? 'var(--text-dim)' : 'var(--text)', textDecoration: t.done ? 'line-through' : 'none' }}>
                 {t.text}
                 {t.recurrence?.enabled && <Repeat size={11} color="var(--text-dim)" title="Repeats" />}
                 {(t.links || []).length > 0 && <Link2 size={11} color="var(--accent)" title="Linked" />}
               </button>
-
+              <button onClick={() => setLinkPickerFor(t.id)} className={(t.links || []).length > 0 ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'} style={{ color: (t.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }} title="Link items">
+                <Link2 size={14} />
+              </button>
               <div className="relative">
-                <button
-                  onClick={() => setLinkPickerFor(t.id)}
-                  className={(t.links || []).length > 0 ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                  style={{ color: (t.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}
-                  title="Link items"
-                >
-                  <Link2 size={14} />
-                </button>
-              </div>
-
-              <div className="relative">
-                <button
-                  onClick={() => setRecurrencePanelFor(recurrencePanelFor === t.id ? null : t.id)}
-                  className={t.recurrence?.enabled ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                  style={{ color: t.recurrence?.enabled ? 'var(--accent)' : 'var(--text-dim)' }}
-                  title="Repeat settings"
-                >
+                <button onClick={() => setRecurrencePanelFor(recurrencePanelFor === t.id ? null : t.id)} className={t.recurrence?.enabled ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'} style={{ color: t.recurrence?.enabled ? 'var(--accent)' : 'var(--text-dim)' }} title="Repeat settings">
                   <Repeat size={14} />
                 </button>
-                {recurrencePanelFor === t.id && (
-                  <RecurrencePanel
-                    recurrence={t.recurrence || defaultRecurrence()}
-                    onChange={(r) => updateRecurrence(t.id, r)}
-                    onClose={() => setRecurrencePanelFor(null)}
-                  />
-                )}
+                {recurrencePanelFor === t.id && <RecurrencePanel recurrence={t.recurrence || defaultRecurrence()} onChange={(r) => updateRecurrence(t.id, r)} onClose={() => setRecurrencePanelFor(null)} />}
               </div>
-
-              <button
-                onClick={() => togglePin(t.id)}
-                className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-              >
+              <button onClick={() => togglePin(t.id)} className={t.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'} style={{ color: t.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}>
                 {t.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
               </button>
-              <button
-                onClick={() => remove(t.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--text-dim)' }}
-              >
+              <button onClick={() => remove(t.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-dim)' }}>
                 <Trash2 size={15} />
               </button>
             </div>
 
             {expandedId === t.id && (t.links || []).length > 0 && (
-              <div className="px-3 pt-1.5 pb-1">
-                <LinkedItems type="todo" id={t.id} links={t.links} goTo={goTo} />
-              </div>
+              <div className="px-3 pt-1.5 pb-1"><LinkedItems type="todo" id={t.id} links={t.links} goTo={goTo} /></div>
             )}
 
             {linkPickerFor === t.id && (
-              <LinkPicker
-                excludeType="todo"
-                excludeId={t.id}
-                existingLinks={t.links}
-                onConfirm={(selected) => saveLinks(t.id, selected)}
-                onClose={() => setLinkPickerFor(null)}
-              />
+              <LinkPicker excludeType="todo" excludeId={t.id} existingLinks={t.links} onConfirm={(selected) => saveLinks(t.id, selected)} onClose={() => setLinkPickerFor(null)} />
             )}
           </div>
         ))}
@@ -318,9 +219,7 @@ export default function TodosPanel({ pendingAction, goTo }) {
               <h3 className="font-display text-lg" style={{ color: 'var(--text)' }}>Clear all completed to-dos?</h3>
               <button onClick={() => setConfirmClear(false)} style={{ color: 'var(--text-dim)' }}><X size={18} /></button>
             </div>
-            <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>
-              This will remove all completed to-dos from your list. They'll be moved to Recently Deleted, so you can still restore them afterward.
-            </p>
+            <p className="text-sm mb-6" style={{ color: 'var(--text-dim)' }}>This will remove all completed to-dos from your list. They'll be moved to Recently Deleted, so you can still restore them afterward.</p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setConfirmClear(false)} className="rounded-md px-4 py-2 text-sm" style={{ color: 'var(--text-dim)', border: '1px solid var(--line)' }}>Cancel</button>
               <button onClick={clearCompleted} className="rounded-md px-4 py-2 text-sm font-medium" style={{ background: 'var(--coral)', color: '#fff' }}>Clear Completed</button>

@@ -1,4 +1,3 @@
-// Curated list — deliberately not exhaustive. Users can always type a custom name.
 export const SUBSCRIPTION_BRANDS = [
   'Netflix', 'Spotify', 'YouTube Premium', 'Amazon Prime', 'Prime Video',
   'Disney+', 'Apple Music', 'Apple TV+', 'Apple One', 'Google One',

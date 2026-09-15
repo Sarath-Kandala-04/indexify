@@ -13,19 +13,14 @@ export const ACCENT_OPTIONS = [
 
 export function useAccent() {
   const [accent, setAccent] = useLocalStorage('dashboard.accent', 'teal')
-
   useEffect(() => {
     const root = document.documentElement
     try {
-      if (accent && accent !== 'teal') {
-        root.dataset.accent = accent
-      } else {
-        delete root.dataset.accent
-      }
+      if (accent && accent !== 'teal') root.dataset.accent = accent
+      else delete root.dataset.accent
     } catch {
-      // if the DOM write somehow fails, the CSS just stays on the default teal
+      // falls back to default teal
     }
   }, [accent])
-
   return [accent, setAccent]
 }

@@ -1,8 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import {
-  Plus, Trash2, Search, X, Edit3, Calendar, CreditCard, Pause, Play, Pin, PinOff, Link2,
-} from 'lucide-react'
-
+import { Plus, Trash2, Search, X, Edit3, Calendar, CreditCard, Pause, Play, Pin, PinOff, Link2 } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 import BrandPicker from './BrandPicker'
@@ -18,10 +15,8 @@ const CATEGORIES = ['Entertainment', 'Software', 'Music', 'Gaming', 'Cloud Stora
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
 }
-
 function getMonthlyCost(s) { return s.billingCycle === 'yearly' ? s.amount / 12 : s.amount }
 function getYearlyCost(s) { return s.billingCycle === 'yearly' ? s.amount : s.amount * 12 }
-
 function getDaysUntil(dateString) {
   const today = new Date()
   const date = new Date(dateString)
@@ -29,7 +24,6 @@ function getDaysUntil(dateString) {
   date.setHours(0, 0, 0, 0)
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24))
 }
-
 function emptyForm() {
   return { name: '', amount: '', billingCycle: 'monthly', nextBillingDate: '', category: 'Entertainment', status: 'active', notes: '' }
 }
@@ -37,7 +31,6 @@ function emptyForm() {
 export default function SubscriptionsPanel({ pendingAction, goTo }) {
   const { subscriptions, setSubscriptions, softDelete, restoreItem } = useData()
   const { showToast } = useToast()
-
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('All')
   const [showForm, setShowForm] = useState(false)
@@ -46,7 +39,6 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
   const [highlightId, setHighlightId] = useState(null)
   const [linkPickerFor, setLinkPickerFor] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-
   const lastHandledHighlightId = useRef(null)
 
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'active')
@@ -79,11 +71,8 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
   function saveSubscription(event) {
     event.preventDefault()
     if (!form.name.trim() || !form.amount || !form.nextBillingDate) return
-
     if (editingId) {
-      setSubscriptions(subscriptions.map((s) =>
-        s.id === editingId ? { ...s, ...form, name: form.name.trim(), amount: Number(form.amount), updatedAt: Date.now() } : s
-      ))
+      setSubscriptions(subscriptions.map((s) => (s.id === editingId ? { ...s, ...form, name: form.name.trim(), amount: Number(form.amount), updatedAt: Date.now() } : s)))
     } else {
       const subscription = {
         id: uid(), name: form.name.trim(), amount: Number(form.amount), billingCycle: form.billingCycle,
@@ -187,12 +176,8 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
             <div className="flex min-h-[350px] items-center justify-center">
               <div className="text-center">
                 <CreditCard size={32} className="mx-auto mb-3" color="var(--text-dim)" />
-                <p className="text-sm" style={{ color: 'var(--text-dim)' }}>
-                  {subscriptions.length === 0 ? 'No subscriptions yet.' : 'Nothing matches your search.'}
-                </p>
-                {subscriptions.length === 0 && (
-                  <button onClick={openNewForm} className="mt-4 text-sm" style={{ color: 'var(--accent)' }}>Add your first subscription</button>
-                )}
+                <p className="text-sm" style={{ color: 'var(--text-dim)' }}>{subscriptions.length === 0 ? 'No subscriptions yet.' : 'Nothing matches your search.'}</p>
+                {subscriptions.length === 0 && <button onClick={openNewForm} className="mt-4 text-sm" style={{ color: 'var(--accent)' }}>Add your first subscription</button>}
               </div>
             </div>
           ) : (
@@ -201,14 +186,7 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                 const days = getDaysUntil(subscription.nextBillingDate)
                 return (
                   <div key={subscription.id}>
-                    <div
-                      className="rounded-lg p-4 transition-colors"
-                      style={{
-                        background: 'var(--panel-2)',
-                        border: subscription.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)',
-                        opacity: subscription.status === 'paused' ? 0.6 : 1,
-                      }}
-                    >
+                    <div className="rounded-lg p-4 transition-colors" style={{ background: 'var(--panel-2)', border: subscription.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)', opacity: subscription.status === 'paused' ? 0.6 : 1 }}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>
@@ -218,9 +196,7 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                             <button onClick={() => setExpandedId(expandedId === subscription.id ? null : subscription.id)} className="flex items-center gap-2 text-left">
                               {subscription.isPinned && <Pin size={12} color="var(--accent)" />}
                               <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>{subscription.name}</h3>
-                              <span className="rounded px-2 py-0.5 text-[10px]" style={{ background: subscription.status === 'active' ? 'var(--panel)' : 'var(--line)', color: 'var(--text-dim)' }}>
-                                {subscription.status}
-                              </span>
+                              <span className="rounded px-2 py-0.5 text-[10px]" style={{ background: subscription.status === 'active' ? 'var(--panel)' : 'var(--line)', color: 'var(--text-dim)' }}>{subscription.status}</span>
                               {(subscription.links || []).length > 0 && <Link2 size={11} color="var(--accent)" />}
                             </button>
                             <div className="mt-1 text-xs" style={{ color: 'var(--text-dim)' }}>{subscription.category}</div>
@@ -231,7 +207,6 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                           <div className="text-xs" style={{ color: 'var(--text-dim)' }}>/ {subscription.billingCycle}</div>
                         </div>
                       </div>
-
                       <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: 'var(--line)' }}>
                         <div className="flex min-w-0 items-center gap-2">
                           <Calendar size={14} color="var(--text-dim)" />
@@ -261,21 +236,11 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                         </div>
                       </div>
                     </div>
-
                     {expandedId === subscription.id && (subscription.links || []).length > 0 && (
-                      <div className="px-2 pt-1.5">
-                        <LinkedItems type="subscription" id={subscription.id} links={subscription.links} goTo={goTo} />
-                      </div>
+                      <div className="px-2 pt-1.5"><LinkedItems type="subscription" id={subscription.id} links={subscription.links} goTo={goTo} /></div>
                     )}
-
                     {linkPickerFor === subscription.id && (
-                      <LinkPicker
-                        excludeType="subscription"
-                        excludeId={subscription.id}
-                        existingLinks={subscription.links}
-                        onConfirm={(selected) => saveLinks(subscription.id, selected)}
-                        onClose={() => setLinkPickerFor(null)}
-                      />
+                      <LinkPicker excludeType="subscription" excludeId={subscription.id} existingLinks={subscription.links} onConfirm={(selected) => saveLinks(subscription.id, selected)} onClose={() => setLinkPickerFor(null)} />
                     )}
                   </div>
                 )

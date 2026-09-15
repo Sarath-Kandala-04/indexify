@@ -5,20 +5,14 @@ export function defaultRecurrence() {
   return { enabled: false, frequency: 'daily', interval: 1, days: [] }
 }
 
-// Computes the next due date given the *current* due date and a recurrence rule.
-// Pure local date math — no external calendar/timezone service.
 export function getNextOccurrence(currentDateStr, recurrence) {
   const current = new Date(currentDateStr)
   const { frequency, interval, days } = recurrence
 
-  if (frequency === 'daily') {
-    return new Date(current.getTime() + interval * DAY_MS)
-  }
+  if (frequency === 'daily') return new Date(current.getTime() + interval * DAY_MS)
 
   if (frequency === 'weekly') {
-    if (!days || days.length === 0) {
-      return new Date(current.getTime() + interval * 7 * DAY_MS)
-    }
+    if (!days || days.length === 0) return new Date(current.getTime() + interval * 7 * DAY_MS)
     let next = new Date(current.getTime() + DAY_MS)
     for (let i = 0; i < 7 * interval + 7; i++) {
       const name = WEEKDAY_NAMES[next.getDay()]

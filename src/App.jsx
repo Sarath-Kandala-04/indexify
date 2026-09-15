@@ -1,15 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 
 import {
-  NotebookText,
-  ListTodo,
-  Wallet,
-  CreditCard,
-  Settings,
-  ChevronDown,
-  Check,
-  Trash2,
-  Waypoints,
+  NotebookText, ListTodo, Wallet, CreditCard, Settings, ChevronDown, Check, Trash2,
+  Waypoints, Download, Upload,
 } from 'lucide-react'
 
 import HomePanel from './HomePanel'
@@ -23,6 +16,8 @@ import Clock from './Clock'
 import { useTheme } from './useTheme'
 import { useAccent, ACCENT_OPTIONS } from './useAccent'
 import { useToast } from './ToastContext'
+import { useData } from './DataContext'
+import { exportToZip, importFromZipFile } from './exportImport'
 
 const TABS = [
   { id: 'notes', label: 'Notes', icon: NotebookText },
@@ -56,10 +51,12 @@ function SettingsMenu() {
   const [theme, setTheme] = useTheme()
   const [accent, setAccent] = useAccent()
   const { showToast } = useToast()
+  const { notes, todos, expenses, subscriptions, deleted, importMergedData } = useData()
   const [open, setOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [accentOpen, setAccentOpen] = useState(false)
   const wrapperRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   const currentAccentLabel = ACCENT_OPTIONS.find((a) => a.id === accent)?.label || 'Teal (Default)'
 
@@ -84,6 +81,34 @@ function SettingsMenu() {
     }
   }
 
+  async function handleExport() {
+    try {
+      await exportToZip({ notes, todos, expenses, subscriptions, deleted })
+      showToast('Export downloaded.')
+    } catch {
+      showToast('Failed to export data. Please try again.')
+    }
+    setOpen(false)
+  }
+
+  function handleImportClick() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const result = await importFromZipFile(file)
+      importMergedData(result)
+      showToast('Import complete.')
+    } catch {
+      showToast('Failed to import data. Please check the file and try again.')
+    }
+    setOpen(false)
+  }
+
   return (
     <div className="relative" ref={wrapperRef}>
       {open && (
@@ -106,7 +131,6 @@ function SettingsMenu() {
               {theme === 'dark' ? 'Dark' : 'Light'}
               <ChevronDown size={13} />
             </button>
-
             {themeOpen && (
               <div
                 className="absolute top-full right-0 mt-1 w-28 rounded-md p-1 shadow-lg z-20"
@@ -146,7 +170,6 @@ function SettingsMenu() {
               {currentAccentLabel}
               <ChevronDown size={13} />
             </button>
-
             {accentOpen && (
               <div
                 className="absolute top-full right-0 mt-1 w-40 rounded-md p-1 shadow-lg z-20 max-h-64 overflow-y-auto"
@@ -168,6 +191,31 @@ function SettingsMenu() {
               </div>
             )}
           </div>
+
+          <div className="my-1 border-t" style={{ borderColor: 'var(--line)' }} />
+
+          <button
+            onClick={handleExport}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+            style={{ color: 'var(--text)' }}
+          >
+            <Download size={14} color="var(--accent)" /> Export Data (.zip)
+          </button>
+
+          <button
+            onClick={handleImportClick}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+            style={{ color: 'var(--text)' }}
+          >
+            <Upload size={14} color="var(--accent)" /> Import Data (.zip)
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".zip"
+            onChange={handleImportFile}
+            className="hidden"
+          />
         </div>
       )}
 
@@ -195,25 +243,20 @@ export default function App() {
 
   const goToItem = useCallback((tabId, action) => {
     setTab(tabId)
-    if (action) {
-      setPendingAction({ ...action, id: Date.now() + Math.random() })
-    }
+    if (action) setPendingAction({ ...action, id: Date.now() + Math.random() })
   }, [])
 
   useEffect(() => {
     function handleKeyDown(e) {
       if (!e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) return
       if (isTypingTarget(document.activeElement)) return
-
       const key = e.key.toLowerCase()
       const shortcut = SHORTCUTS[key]
       if (!shortcut) return
-
       e.preventDefault()
       setTab(shortcut.tab)
       dispatchShortcut(shortcut.action)
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [dispatchShortcut])

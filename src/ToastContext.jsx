@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useRef, useCallback } from 'react'
 const ToastContext = createContext(null)
 
 export function ToastProvider({ children }) {
-  const [toast, setToast] = useState(null) // { id, message, actionLabel, onAction }
+  const [toast, setToast] = useState(null)
   const timerRef = useRef(null)
 
   const showToast = useCallback((message, options = {}) => {
@@ -34,21 +34,13 @@ export function ToastProvider({ children }) {
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 rounded-md px-4 py-3 shadow-lg"
           style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
         >
-          <span className="text-sm" style={{ color: 'var(--text)' }}>
-            {toast.message}
-          </span>
+          <span className="text-sm" style={{ color: 'var(--text)' }}>{toast.message}</span>
           {toast.actionLabel && (
-            <button
-              onClick={handleAction}
-              className="text-sm font-medium"
-              style={{ color: 'var(--teal)' }}
-            >
+            <button onClick={handleAction} className="text-sm font-medium" style={{ color: 'var(--teal)' }}>
               {toast.actionLabel}
             </button>
           )}
-          <button onClick={dismiss} className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            ✕
-          </button>
+          <button onClick={dismiss} className="text-xs" style={{ color: 'var(--text-dim)' }}>✕</button>
         </div>
       )}
     </ToastContext.Provider>

@@ -11,10 +11,7 @@ function uid() {
 }
 
 const CATEGORIES = ['Food', 'Transport', 'Housing', 'Utilities', 'Health', 'Leisure', 'Other']
-const CATEGORY_COLOR = {
-  Food: '#e8a33d', Transport: '#4fb6a8', Housing: '#8b7fd1', Utilities: '#5fa8e0',
-  Health: '#e1604f', Leisure: '#d4a6d0', Other: '#9a9aa2',
-}
+const CATEGORY_COLOR = { Food: '#e8a33d', Transport: '#4fb6a8', Housing: '#8b7fd1', Utilities: '#5fa8e0', Health: '#e1604f', Leisure: '#d4a6d0', Other: '#9a9aa2' }
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -35,19 +32,13 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
   const lastHandledActionId = useRef(null)
   const lastHandledHighlightId = useRef(null)
 
-  const sorted = useMemo(
-    () => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt),
-    [expenses]
-  )
-
+  const sorted = useMemo(() => [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt), [expenses])
   const thisMonthKey = todayStr().slice(0, 7)
   const monthTotal = expenses.filter((e) => e.date.startsWith(thisMonthKey)).reduce((sum, e) => sum + e.amount, 0)
 
   const byCategory = useMemo(() => {
     const map = {}
-    expenses.filter((e) => e.date.startsWith(thisMonthKey)).forEach((e) => {
-      map[e.category] = (map[e.category] || 0) + e.amount
-    })
+    expenses.filter((e) => e.date.startsWith(thisMonthKey)).forEach((e) => { map[e.category] = (map[e.category] || 0) + e.amount })
     return Object.entries(map).sort((a, b) => b[1] - a[1])
   }, [expenses, thisMonthKey])
 
@@ -57,10 +48,7 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
     e.preventDefault()
     const value = parseFloat(amount)
     if (!value || value <= 0) return
-    setExpenses([
-      { id: uid(), amount: value, label: label.trim() || category, category, date, createdAt: Date.now(), isPinned: false, links: [] },
-      ...expenses,
-    ])
+    setExpenses([{ id: uid(), amount: value, label: label.trim() || category, category, date, createdAt: Date.now(), isPinned: false, links: [] }, ...expenses])
     setAmount('')
     setLabel('')
   }
@@ -129,38 +117,12 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
       <ExpenseCharts expenses={expenses} />
 
       <form onSubmit={addExpense} className="flex flex-wrap gap-2 mb-6">
-        <input
-          ref={amountInputRef}
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          type="number"
-          step="0.01"
-          className="w-28 rounded-md px-3 py-2.5 text-sm font-mono outline-none"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        />
-        <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="What for?"
-          className="flex-1 min-w-[140px] rounded-md px-3 py-2.5 text-sm outline-none"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        />
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-md px-2 text-sm outline-none"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        >
+        <input ref={amountInputRef} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" type="number" step="0.01" className="w-28 rounded-md px-3 py-2.5 text-sm font-mono outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="What for?" className="flex-1 min-w-[140px] rounded-md px-3 py-2.5 text-sm outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }} />
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-md px-2 text-sm outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
           {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <input
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          type="date"
-          className="rounded-md px-2 text-sm outline-none font-mono"
-          style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}
-        />
+        <input value={date} onChange={(e) => setDate(e.target.value)} type="date" className="rounded-md px-2 text-sm outline-none font-mono" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }} />
         <button type="submit" className="flex items-center gap-1.5 rounded-md px-3 text-sm font-medium" style={{ background: 'var(--accent)', color: '#0d1210' }}>
           <Plus size={16} /> Add
         </button>
@@ -184,10 +146,7 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
         {sorted.length === 0 && <p className="text-sm py-8 text-center" style={{ color: 'var(--text-dim)' }}>No expenses logged yet.</p>}
         {sorted.map((e) => (
           <div key={e.id}>
-            <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-md group"
-              style={{ background: 'var(--panel)', border: e.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)' }}
-            >
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-md group" style={{ background: 'var(--panel)', border: e.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)' }}>
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: CATEGORY_COLOR[e.category] }} />
               <button onClick={() => setExpandedId(expandedId === e.id ? null : e.id)} className="flex-1 text-sm truncate text-left flex items-center gap-1.5" style={{ color: 'var(--text)' }}>
                 {e.label}
@@ -195,18 +154,10 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
               </button>
               <span className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>{e.date}</span>
               <span className="text-sm font-mono w-20 text-right" style={{ color: 'var(--text)' }}>₹{e.amount.toFixed(2)}</span>
-              <button
-                onClick={() => setLinkPickerFor(e.id)}
-                className={(e.links || []).length > 0 ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                style={{ color: (e.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}
-              >
+              <button onClick={() => setLinkPickerFor(e.id)} className={(e.links || []).length > 0 ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'} style={{ color: (e.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}>
                 <Link2 size={14} />
               </button>
-              <button
-                onClick={() => togglePin(e.id)}
-                className={e.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'}
-                style={{ color: e.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-              >
+              <button onClick={() => togglePin(e.id)} className={e.isPinned ? '' : 'opacity-0 group-hover:opacity-100 transition-opacity'} style={{ color: e.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}>
                 {e.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
               </button>
               <button onClick={() => remove(e.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-dim)' }}>
@@ -215,19 +166,10 @@ export default function ExpensesPanel({ pendingAction, goTo }) {
             </div>
 
             {expandedId === e.id && (e.links || []).length > 0 && (
-              <div className="px-3 pt-1.5 pb-1">
-                <LinkedItems type="expense" id={e.id} links={e.links} goTo={goTo} />
-              </div>
+              <div className="px-3 pt-1.5 pb-1"><LinkedItems type="expense" id={e.id} links={e.links} goTo={goTo} /></div>
             )}
-
             {linkPickerFor === e.id && (
-              <LinkPicker
-                excludeType="expense"
-                excludeId={e.id}
-                existingLinks={e.links}
-                onConfirm={(selected) => saveLinks(e.id, selected)}
-                onClose={() => setLinkPickerFor(null)}
-              />
+              <LinkPicker excludeType="expense" excludeId={e.id} existingLinks={e.links} onConfirm={(selected) => saveLinks(e.id, selected)} onClose={() => setLinkPickerFor(null)} />
             )}
           </div>
         ))}

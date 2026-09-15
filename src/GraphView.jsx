@@ -18,16 +18,11 @@ export default function GraphView({ goTo }) {
   const [hoveredId, setHoveredId] = useState(null)
   const [positions, setPositions] = useState([])
 
-  const { nodes, edges } = useMemo(
-    () => buildGraphData({ notes, todos, expenses, subscriptions }),
-    [notes, todos, expenses, subscriptions]
-  )
+  const { nodes, edges } = useMemo(() => buildGraphData({ notes, todos, expenses, subscriptions }), [notes, todos, expenses, subscriptions])
 
   useEffect(() => {
     function measure() {
-      if (containerRef.current) {
-        setSize({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight })
-      }
+      if (containerRef.current) setSize({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight })
     }
     measure()
     window.addEventListener('resize', measure)
@@ -39,8 +34,7 @@ export default function GraphView({ goTo }) {
       setPositions([])
       return
     }
-    const laidOut = computeLayout(nodes, edges, size.width, size.height)
-    setPositions(laidOut)
+    setPositions(computeLayout(nodes, edges, size.width, size.height))
   }, [nodes, edges, size.width, size.height])
 
   useEffect(() => {
@@ -59,7 +53,6 @@ export default function GraphView({ goTo }) {
     const textColor = readCssVar('--text-dim')
     const byId = new Map(positions.map((n) => [n.id, n]))
 
-    // Edges first, so nodes draw on top
     ctx.strokeStyle = lineColor
     ctx.lineWidth = 1
     edges.forEach((e) => {
@@ -72,7 +65,6 @@ export default function GraphView({ goTo }) {
       ctx.stroke()
     })
 
-    // Nodes
     positions.forEach((n) => {
       const color = readCssVar(TYPE_COLOR_VAR[n.type]) || readCssVar('--accent')
       const isHovered = n.id === hoveredId
@@ -80,7 +72,6 @@ export default function GraphView({ goTo }) {
       ctx.arc(n.x, n.y, isHovered ? 8 : 6, 0, Math.PI * 2)
       ctx.fillStyle = color
       ctx.fill()
-
       if (isHovered) {
         ctx.fillStyle = textColor
         ctx.font = '12px Inter, sans-serif'
@@ -103,11 +94,8 @@ export default function GraphView({ goTo }) {
     const my = e.clientY - rect.top
     const hit = positions.find((n) => Math.hypot(n.x - mx, n.y - my) < 10)
     if (!hit) return
-    if (hit.refType === 'note') {
-      goTo(TYPE_TAB[hit.refType], { type: 'open-note', itemId: hit.refId })
-    } else {
-      goTo(TYPE_TAB[hit.refType], { type: `highlight-${hit.refType}`, itemId: hit.refId })
-    }
+    if (hit.refType === 'note') goTo(TYPE_TAB[hit.refType], { type: 'open-note', itemId: hit.refId })
+    else goTo(TYPE_TAB[hit.refType], { type: `highlight-${hit.refType}`, itemId: hit.refId })
   }
 
   return (
@@ -117,11 +105,8 @@ export default function GraphView({ goTo }) {
           <h2 className="font-display text-2xl flex items-center gap-2" style={{ color: 'var(--text)' }}>
             <Waypoints size={20} color="var(--accent)" /> Graph
           </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>
-            Visualizing links between your Notes, To-dos, Expenses, and Subscriptions.
-          </p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>Visualizing links between your Notes, To-dos, Expenses, and Subscriptions.</p>
         </div>
-
         <div className="flex gap-3 text-xs" style={{ color: 'var(--text-dim)' }}>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-teal)' }} /> Notes</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-blue)' }} /> To-dos</span>
@@ -130,28 +115,15 @@ export default function GraphView({ goTo }) {
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex-1 rounded-lg overflow-hidden relative"
-        style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}
-      >
+      <div ref={containerRef} className="flex-1 rounded-lg overflow-hidden relative" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>
         {nodes.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
             <Waypoints size={28} className="mb-2" color="var(--text-dim)" />
-            <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>
-              Nothing linked yet
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>
-              Link items from any Note, To-do, Expense, or Subscription to see them appear here.
-            </p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Nothing linked yet</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>Link items from any Note, To-do, Expense, or Subscription to see them appear here.</p>
           </div>
         ) : (
-          <canvas
-            ref={canvasRef}
-            onMouseMove={handleMouseMove}
-            onClick={handleClick}
-            style={{ cursor: hoveredId ? 'pointer' : 'default' }}
-          />
+          <canvas ref={canvasRef} onMouseMove={handleMouseMove} onClick={handleClick} style={{ cursor: hoveredId ? 'pointer' : 'default' }} />
         )}
       </div>
     </div>

@@ -1,9 +1,4 @@
-export const TYPE_COLOR_VAR = {
-  note: '--accent-teal',
-  todo: '--accent-blue',
-  expense: '--accent-orange',
-  subscription: '--accent-purple',
-}
+export const TYPE_COLOR_VAR = { note: '--accent-teal', todo: '--accent-blue', expense: '--accent-orange', subscription: '--accent-purple' }
 
 export function buildGraphData({ notes, todos, expenses, subscriptions }) {
   const nodes = []
@@ -19,9 +14,7 @@ export function buildGraphData({ notes, todos, expenses, subscriptions }) {
   }
 
   function addNodes(list, type) {
-    list.forEach((item) => {
-      nodes.push({ id: `${type}:${item.id}`, type, refType: type, refId: item.id, label: label(type, item) })
-    })
+    list.forEach((item) => nodes.push({ id: `${type}:${item.id}`, type, refType: type, refId: item.id, label: label(type, item) }))
   }
 
   addNodes(notes, 'note')
@@ -36,9 +29,9 @@ export function buildGraphData({ notes, todos, expenses, subscriptions }) {
       (item.links || []).forEach((link) => {
         const sourceId = `${type}:${item.id}`
         const targetId = `${link.type}:${link.id}`
-        if (!nodeIds.has(targetId)) return // linked item may have been deleted
+        if (!nodeIds.has(targetId)) return
         const key = [sourceId, targetId].sort().join('|')
-        if (edgeSet.has(key)) return // avoid duplicate edge if both sides link each other
+        if (edgeSet.has(key)) return
         edgeSet.add(key)
         edges.push({ source: sourceId, target: targetId })
       })
@@ -50,16 +43,8 @@ export function buildGraphData({ notes, todos, expenses, subscriptions }) {
   addEdges(expenses, 'expense')
   addEdges(subscriptions, 'subscription')
 
-  // Only include nodes that actually have at least one connection — an empty
-  // dot for every unlinked item would make the graph noise, not signal.
   const connectedIds = new Set()
-  edges.forEach((e) => {
-    connectedIds.add(e.source)
-    connectedIds.add(e.target)
-  })
+  edges.forEach((e) => { connectedIds.add(e.source); connectedIds.add(e.target) })
 
-  return {
-    nodes: nodes.filter((n) => connectedIds.has(n.id)),
-    edges,
-  }
+  return { nodes: nodes.filter((n) => connectedIds.has(n.id)), edges }
 }

@@ -10,21 +10,15 @@ export function getItemLabel(type, item) {
 }
 
 export function findItem(data, type, id) {
-  const list = {
-    note: data.notes, todo: data.todos, expense: data.expenses, subscription: data.subscriptions,
-  }[type]
+  const list = { note: data.notes, todo: data.todos, expense: data.expenses, subscription: data.subscriptions }[type]
   return list?.find((i) => i.id === id) || null
 }
 
-// Finds every item in any module whose `links` array references (type, id) —
-// i.e. items that point TO this one, even if this one doesn't point back.
 export function findBacklinks(data, type, id) {
   const results = []
   function scan(list, itemType) {
     list.forEach((item) => {
-      if ((item.links || []).some((l) => l.type === type && l.id === id)) {
-        results.push({ type: itemType, id: item.id })
-      }
+      if ((item.links || []).some((l) => l.type === type && l.id === id)) results.push({ type: itemType, id: item.id })
     })
   }
   scan(data.notes, 'note')

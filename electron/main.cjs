@@ -27,6 +27,10 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }
+
+  win.webContents.on('did-fail-load', (event, code, description) => {
+    console.error('Window failed to load:', code, description)
+  })
 }
 
 app.whenReady().then(() => {
@@ -40,44 +44,62 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// ---------- config: remembers which folder the user chose ----------
-
 function readConfig() {
   try {
     if (!fssync.existsSync(CONFIG_PATH)) return {}
-    return JSON.parse(fssync.readFileSync(CONFIG_PATH, 'utf-8'))
-  } catch {
+    const raw = fssync.readFileSync(CONFIG_PATH, 'utf-8')
+    if (!raw.trim()) return {}
+    return JSON.parse(raw)
+  } catch (err) {
+    console.error('readConfig failed:', err)
     return {}
   }
 }
 
 function writeConfig(cfg) {
-  fssync.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
+  try {
+    fssync.mkdirSync(path.dirname(CONFIG_PATH), { recursive: true })
+    fssync.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
+  } catch (err) {
+    console.error('writeConfig failed:', err)
+  }
 }
 
 ipcMain.handle('fs:choose-folder', async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ['openDirectory', 'createDirectory'],
-    title: 'Choose a folder for your Indexify data',
-  })
-  if (result.canceled || result.filePaths.length === 0) return null
-
-  const folderPath = result.filePaths[0]
-  await fs.mkdir(path.join(folderPath, 'notes'), { recursive: true })
-
-  const cfg = readConfig()
-  cfg.dataFolder = folderPath
-  writeConfig(cfg)
-
-  return folderPath
+  try {
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory', 'createDirectory'],
+      title: 'Choose a folder for your Indexify data',
+    })
+    if (result.canceled || result.filePaths.length === 0) return null
+    const folderPath = result.filePaths[0]
+    await fs.mkdir(path.join(folderPath, 'notes'), { recursive: true })
+    const cfg = readConfig()
+    cfg.dataFolder = folderPath
+    writeConfig(cfg)
+    return folderPath
+  } catch (err) {
+    console.error('choose-folder failed:', err)
+    return null
+  }
 })
 
 ipcMain.handle('fs:get-saved-folder', async () => {
   const cfg = readConfig()
-  return cfg.dataFolder || null
+  if (cfg.dataFolder && fssync.existsSync(cfg.dataFolder)) return cfg.dataFolder
+  return null
 })
 
-// ---------- bulk read: everything the app needs at startup ----------
+ipcMain.handle('fs:clear-saved-folder', async () => {
+  try {
+    const cfg = readConfig()
+    delete cfg.dataFolder
+    writeConfig(cfg)
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: String(err) }
+  }
+})
 
 ipcMain.handle('fs:read-all', async (event, folderPath) => {
   try {
@@ -88,41 +110,36 @@ ipcMain.handle('fs:read-all', async (event, folderPath) => {
     } catch {
       noteFiles = []
     }
-
     const notes = []
     for (const file of noteFiles) {
-      const content = await fs.readFile(path.join(notesDir, file), 'utf-8')
-      notes.push(content)
-    }
-
-    async function readCsvSafe(name) {
-      const p = path.join(folderPath, name)
       try {
-        return await fs.readFile(p, 'utf-8')
+        notes.push(await fs.readFile(path.join(notesDir, file), 'utf-8'))
+      } catch (err) {
+        console.error('failed reading note file', file, err)
+      }
+    }
+    async function readCsvSafe(name) {
+      try {
+        return await fs.readFile(path.join(folderPath, name), 'utf-8')
       } catch {
         return ''
       }
     }
-
     const todosCsv = await readCsvSafe('todos.csv')
     const expensesCsv = await readCsvSafe('expenses.csv')
     const subscriptionsCsv = await readCsvSafe('subscriptions.csv')
-
     let meta = { deleted: [] }
     try {
-      const metaRaw = await fs.readFile(path.join(folderPath, '.indexify-meta.json'), 'utf-8')
-      meta = JSON.parse(metaRaw)
+      meta = JSON.parse(await fs.readFile(path.join(folderPath, '.indexify-meta.json'), 'utf-8'))
     } catch {
-      // no meta file yet — first run in this folder
+      // fine — no meta file yet
     }
-
     return { ok: true, notes, todosCsv, expensesCsv, subscriptionsCsv, meta }
   } catch (err) {
+    console.error('read-all failed:', err)
     return { ok: false, error: String(err) }
   }
 })
-
-// ---------- writes ----------
 
 ipcMain.handle('fs:write-note', async (event, folderPath, id, markdown) => {
   try {
@@ -131,38 +148,39 @@ ipcMain.handle('fs:write-note', async (event, folderPath, id, markdown) => {
     await fs.writeFile(path.join(notesDir, `${id}.md`), markdown, 'utf-8')
     return { ok: true }
   } catch (err) {
+    console.error('write-note failed:', err)
     return { ok: false, error: String(err) }
   }
 })
 
 ipcMain.handle('fs:delete-note-file', async (event, folderPath, id) => {
   try {
-    const target = path.join(folderPath, 'notes', `${id}.md`)
-    await fs.rm(target, { force: true })
+    await fs.rm(path.join(folderPath, 'notes', `${id}.md`), { force: true })
     return { ok: true }
   } catch (err) {
+    console.error('delete-note-file failed:', err)
     return { ok: false, error: String(err) }
   }
 })
 
 ipcMain.handle('fs:write-csv', async (event, folderPath, name, csvString) => {
   try {
+    await fs.mkdir(folderPath, { recursive: true })
     await fs.writeFile(path.join(folderPath, name), csvString, 'utf-8')
     return { ok: true }
   } catch (err) {
+    console.error('write-csv failed:', name, err)
     return { ok: false, error: String(err) }
   }
 })
 
 ipcMain.handle('fs:write-meta', async (event, folderPath, metaObject) => {
   try {
-    await fs.writeFile(
-      path.join(folderPath, '.indexify-meta.json'),
-      JSON.stringify(metaObject, null, 2),
-      'utf-8'
-    )
+    await fs.mkdir(folderPath, { recursive: true })
+    await fs.writeFile(path.join(folderPath, '.indexify-meta.json'), JSON.stringify(metaObject, null, 2), 'utf-8')
     return { ok: true }
   } catch (err) {
+    console.error('write-meta failed:', err)
     return { ok: false, error: String(err) }
   }
 })

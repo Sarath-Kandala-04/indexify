@@ -1,25 +1,25 @@
 {
   "name": "indexify",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Indexify — your personal dashboard for notes, todos, expenses, and subscriptions.",
   "author": "Sai Sarath Kandala",
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder"
   },
   "dependencies": {
-    "gray-matter": "^4.0.3",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.33.0",
-    "papaparse": "^5.7.0",
+    "papaparse": "^5.4.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "recharts": "^3.10.1"
+    "recharts": "^2.12.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -37,17 +37,10 @@
   "build": {
     "appId": "com.sarath.indexify",
     "productName": "Indexify",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*"
-    ],
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*"],
     "icon": "build/icon.ico",
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
-    }
+    "win": { "target": "nsis", "icon": "build/icon.ico" },
+    "nsis": { "oneClick": true, "perMachine": false }
   }
 }

@@ -7,7 +7,6 @@ export function collectLocalStorageData() {
       return fallback
     }
   }
-
   return {
     notes: get('dashboard.notes', []),
     todos: get('dashboard.todos', []),
@@ -19,10 +18,5 @@ export function collectLocalStorageData() {
 
 export function hasLegacyData() {
   const data = collectLocalStorageData()
-  return (
-    data.notes.length > 0 ||
-    data.todos.length > 0 ||
-    data.expenses.length > 0 ||
-    data.subscriptions.length > 0
-  )
+  return data.notes.length > 0 || data.todos.length > 0 || data.expenses.length > 0 || data.subscriptions.length > 0
 }

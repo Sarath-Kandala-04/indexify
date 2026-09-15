@@ -7,7 +7,7 @@ const JSON_FIELDS = {
 }
 
 export function toCsv(rows, jsonFields = []) {
-  const prepped = rows.map((row) => {
+  const prepped = (rows || []).map((row) => {
     const copy = { ...row }
     jsonFields.forEach((f) => {
       if (copy[f] !== undefined) copy[f] = JSON.stringify(copy[f])
@@ -29,11 +29,7 @@ export function fromCsv(csvString, jsonFields = []) {
     if ('updatedAt' in copy) copy.updatedAt = Number(copy.updatedAt)
     jsonFields.forEach((f) => {
       if (copy[f]) {
-        try {
-          copy[f] = JSON.parse(copy[f])
-        } catch {
-          copy[f] = f === 'links' ? [] : undefined
-        }
+        try { copy[f] = JSON.parse(copy[f]) } catch { copy[f] = f === 'links' ? [] : undefined }
       } else if (f === 'links') {
         copy[f] = []
       }

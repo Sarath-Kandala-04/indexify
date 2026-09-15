@@ -37,9 +37,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const list = q
-      ? notes.filter((n) => n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q))
-      : notes
+    const list = q ? notes.filter((n) => n.title.toLowerCase().includes(q) || (n.body || '').toLowerCase().includes(q)) : notes
     return [...list].sort((a, b) => b.updatedAt - a.updatedAt)
   }, [notes, query])
 
@@ -47,10 +45,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
   const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw), links: activeRaw.links || [] } : null
 
   function createNote() {
-    const note = {
-      id: uid(), title: 'Untitled note', body: '', blocks: [newBlock('paragraph', '')],
-      updatedAt: Date.now(), isPinned: false, links: [],
-    }
+    const note = { id: uid(), title: 'Untitled note', body: '', blocks: [newBlock('paragraph', '')], updatedAt: Date.now(), isPinned: false, links: [] }
     setNotes([note, ...notes])
     setActiveId(note.id)
     requestAnimationFrame(() => titleInputRef.current?.focus())
@@ -67,7 +62,6 @@ export default function NotesPanel({ pendingAction, goTo }) {
   function updateBlockText(blockId, text) {
     const blocks = active.blocks.map((b) => (b.id === blockId ? { ...b, text } : b))
     persistBlocks(active.id, blocks)
-
     if (text.startsWith('/')) {
       const el = blockRefs.current[blockId]
       const rect = el?.getBoundingClientRect()
@@ -106,8 +100,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
 
   function removeBlock(blockId) {
     if (active.blocks.length <= 1) return
-    const blocks = active.blocks.filter((b) => b.id !== blockId)
-    persistBlocks(active.id, blocks)
+    persistBlocks(active.id, active.blocks.filter((b) => b.id !== blockId))
   }
 
   function togglePin(id) {
@@ -165,49 +158,25 @@ export default function NotesPanel({ pendingAction, goTo }) {
     <div className="flex h-full">
       <div className="w-72 shrink-0 border-r flex flex-col" style={{ borderColor: 'var(--line)' }}>
         <div className="p-4 flex flex-col gap-3">
-          <button
-            onClick={createNote}
-            className="flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors"
-            style={{ background: 'var(--accent)', color: '#0d1210' }}
-          >
+          <button onClick={createNote} className="flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium transition-colors" style={{ background: 'var(--accent)', color: '#0d1210' }}>
             <Plus size={16} /> New note
           </button>
-          <div
-            className="flex items-center gap-2 rounded-md px-2.5 py-1.5"
-            style={{ background: 'var(--panel-2)', border: '1px solid var(--line)' }}
-          >
+          <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)' }}>
             <Search size={14} color="var(--text-dim)" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search notes"
-              className="bg-transparent text-sm outline-none w-full"
-              style={{ color: 'var(--text)' }}
-            />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes" className="bg-transparent text-sm outline-none w-full" style={{ color: 'var(--text)' }} />
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-2 pb-4">
           {filtered.length === 0 && (
-            <p className="text-sm px-2 py-6 text-center" style={{ color: 'var(--text-dim)' }}>
-              {notes.length === 0 ? 'No notes yet. Start one.' : 'Nothing matches.'}
-            </p>
+            <p className="text-sm px-2 py-6 text-center" style={{ color: 'var(--text-dim)' }}>{notes.length === 0 ? 'No notes yet. Start one.' : 'Nothing matches.'}</p>
           )}
           {filtered.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => setActiveId(n.id)}
-              className="w-full text-left px-3 py-2.5 rounded-md mb-1 transition-colors"
-              style={{ background: activeId === n.id ? 'var(--panel-2)' : 'transparent' }}
-            >
+            <button key={n.id} onClick={() => setActiveId(n.id)} className="w-full text-left px-3 py-2.5 rounded-md mb-1 transition-colors" style={{ background: activeId === n.id ? 'var(--panel-2)' : 'transparent' }}>
               <div className="flex items-center gap-1.5">
                 {n.isPinned && <Pin size={11} color="var(--accent)" />}
-                <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
-                  {n.title || 'Untitled note'}
-                </div>
+                <div className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>{n.title || 'Untitled note'}</div>
               </div>
-              <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-dim)' }}>
-                {n.body ? n.body.slice(0, 60) : 'No content'}
-              </div>
+              <div className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-dim)' }}>{n.body ? n.body.slice(0, 60) : 'No content'}</div>
             </button>
           ))}
         </div>
@@ -217,60 +186,35 @@ export default function NotesPanel({ pendingAction, goTo }) {
         {active ? (
           <>
             <div className="flex items-center justify-between px-8 pt-20 pb-3">
-              <span className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>
-                Edited {new Date(active.updatedAt).toLocaleString()}
-              </span>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-dim)' }}>Edited {new Date(active.updatedAt).toLocaleString()}</span>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setShowLinkPicker(true)}
-                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                  style={{ color: active.links.length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}
-                >
+                <button onClick={() => setShowLinkPicker(true)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors" style={{ color: active.links.length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}>
                   <Link2 size={14} /> Link
                 </button>
-                <button
-                  onClick={() => togglePin(active.id)}
-                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                  style={{ color: active.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}
-                >
+                <button onClick={() => togglePin(active.id)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors" style={{ color: active.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}>
                   {active.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
                   {active.isPinned ? 'Unpin' : 'Pin'}
                 </button>
-                <button
-                  onClick={() => deleteNote(active.id)}
-                  className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors"
-                  style={{ color: 'var(--accent)' }}
-                >
+                <button onClick={() => deleteNote(active.id)} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-colors" style={{ color: 'var(--accent)' }}>
                   <Trash2 size={14} /> Delete
                 </button>
               </div>
             </div>
 
             <div className="notes-editor-scroll flex-1 overflow-y-auto px-8 pb-8 flex flex-col gap-3 relative">
-              <input
-                ref={titleInputRef}
-                value={active.title}
-                onChange={(e) => updateTitle(active.id, e.target.value)}
-                placeholder="Untitled note"
-                className="font-display text-3xl bg-transparent outline-none mb-1"
-                style={{ color: 'var(--text)' }}
-              />
-
+              <input ref={titleInputRef} value={active.title} onChange={(e) => updateTitle(active.id, e.target.value)} placeholder="Untitled note" className="font-display text-3xl bg-transparent outline-none mb-1" style={{ color: 'var(--text)' }} />
               <LinkedItems type="note" id={active.id} links={active.links} goTo={goTo} />
 
               {active.blocks.map((block) => (
                 <div key={block.id} className="group flex items-start gap-2 mt-2">
                   <GripVertical size={14} className="opacity-0 group-hover:opacity-40 mt-1.5 shrink-0" color="var(--text-dim)" />
-
                   {block.type === 'divider' ? (
                     <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
                   ) : (
                     <>
                       {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
                       {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
-                      {block.type === 'todo' && (
-                        <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />
-                      )}
+                      {block.type === 'todo' && <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />}
                       <textarea
                         ref={(el) => (blockRefs.current[block.id] = el)}
                         value={block.text}
@@ -300,12 +244,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
               ))}
 
               {slashMenu && (
-                <SlashMenu
-                  filter={slashMenu.filter}
-                  position={slashMenu.position}
-                  onSelect={applySlashCommand}
-                  onClose={() => setSlashMenu(null)}
-                />
+                <SlashMenu filter={slashMenu.filter} position={slashMenu.position} onSelect={applySlashCommand} onClose={() => setSlashMenu(null)} />
               )}
             </div>
           </>
@@ -316,13 +255,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
         )}
 
         {showLinkPicker && active && (
-          <LinkPicker
-            excludeType="note"
-            excludeId={active.id}
-            existingLinks={active.links}
-            onConfirm={saveLinks}
-            onClose={() => setShowLinkPicker(false)}
-          />
+          <LinkPicker excludeType="note" excludeId={active.id} existingLinks={active.links} onConfirm={saveLinks} onClose={() => setShowLinkPicker(false)} />
         )}
       </div>
     </div>

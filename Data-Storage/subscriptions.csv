@@ -1,0 +1,12 @@
+id,name,amount,billingCycle,nextBillingDate,category,status,notes,createdAt,updatedAt,isPinned,links
+mtrjw5bpkx0b0,Netflix,199,monthly,2026-06-07,Entertainment,paused,Yashi's Netflix - 07/05/2026,1788804297205,1788804297205,false,[]
+mtrjnbebsxsui,Google One,130,monthly,2026-09-11,Cloud Storage,active,100GB,1788803885171,1788803885171,false,[]
+mtrjixqh9j19f,ChatGPT Plus,1999,monthly,2026-08-23,Software,paused,,1788803680841,1788803680841,false,[]
+mtrjer4aoe7qr,No Broker,1178.82,monthly,2026-08-11,Other,paused,One Time Payment Plan - Freedom Plan,1788803485642,1788803513563,false,"[{""type"":""note"",""id"":""mtrk4z7yuvpup""},{""type"":""expense"",""id"":""mtrg7cess1evn""}]"
+mtrj1w1tt06g8,Claude Pro,1999,monthly,2026-08-23,Software,paused,,1788802885505,1788802885505,false,[]
+mtrj0214q1yxd,ETV Win,99,monthly,2025-11-02,Entertainment,paused,,1788802799944,1788802799944,false,[]
+mtrixf60maz1f,iCloud+,75,monthly,2026-09-16,Cloud Storage,active,,1788802677000,1788802677000,false,[]
+mtriwqd1rslq3,YouTube Premium,195,monthly,2026-08-18,Entertainment,paused,,1788802644853,1788802644853,false,[]
+mtrivo3djptkh,Apple Music,119,monthly,2026-09-23,Music,active,,1788802595257,1788802595257,false,[]
+mtriihm1gwap8,Adobe Creative Cloud,382.32,monthly,2026-09-02,Software,paused,,1788801980329,1788802746324,false,[]
+mtrifix2xq4pq,Amazon Prime,1499,yearly,2027-02-08,Entertainment,active,,1788801842054,1788801842054,false,[]
