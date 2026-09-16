@@ -1,46 +1,58 @@
 {
-  "name": "indexify",
-  "private": true,
-  "version": "2.4.0",
-  "description": "Indexify — your personal dashboard for notes, todos, expenses, and subscriptions.",
-  "author": "Sai Sarath Kandala",
-  "type": "module",
-  "main": "electron/main.cjs",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview",
-    "electron:build": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder"
-  },
-  "dependencies": {
-    "jszip": "^3.10.1",
-    "lucide-react": "^1.33.0",
-    "papaparse": "^5.4.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "recharts": "^2.12.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
-    "autoprefixer": "^10.5.4",
-    "electron": "^43.4.1",
-    "electron-builder": "^26.15.3",
-    "oxlint": "^1.75.0",
-    "postcss": "^8.5.26",
-    "tailwindcss": "^4.3.3",
-    "vite": "^8.2.0"
-  },
-  "build": {
-    "appId": "com.sarath.indexify",
-    "productName": "Indexify",
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "electron/**/*"],
-    "icon": "build/icon.ico",
-    "win": { "target": "nsis", "icon": "build/icon.ico" },
-    "nsis": { "oneClick": true, "perMachine": false }
-  }
+"name": "indexify",
+"private": true,
+"version": "2.4.1",
+"description": "Indexify — your personal dashboard for notes, todos, expenses, and subscriptions.",
+"author": "Sai Sarath Kandala",
+"type": "module",
+"main": "electron/main.cjs",
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"lint": "oxlint",
+"preview": "vite preview",
+"electron:build": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder"
+},
+"dependencies": {
+"jszip": "^3.10.1",
+"lucide-react": "^1.33.0",
+"papaparse": "^5.4.1",
+"react": "^19.2.8",
+"react-dom": "^19.2.8",
+"recharts": "^2.12.0"
+},
+"devDependencies": {
+"@tailwindcss/postcss": "^4.3.3",
+"@types/react": "^19.2.17",
+"@types/react-dom": "^19.2.3",
+"@vitejs/plugin-react": "^6.0.4",
+"autoprefixer": "^10.5.4",
+"electron": "^43.4.1",
+"electron-builder": "^26.15.3",
+"oxlint": "^1.75.0",
+"postcss": "^8.5.26",
+"tailwindcss": "^4.3.3",
+"vite": "^8.2.0"
+},
+"build": {
+"appId": "com.sarath.indexify",
+"productName": "Indexify",
+"directories": {
+"output": "release"
+},
+"files": [
+"dist/**/*",
+"electron/**/*"
+],
+"icon": "build/icon.ico",
+"win": {
+"target": "nsis",
+"icon": "build/icon.ico",
+"signAndEditExecutable": false
+},
+"nsis": {
+"oneClick": true,
+"perMachine": false
+}
+}
 }

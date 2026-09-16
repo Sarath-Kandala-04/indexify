@@ -24,11 +24,11 @@ Indexify is a desktop application built with React and Electron, designed to man
 
 The latest Windows installer is available from the GitHub Releases page.
 
-**Latest release:** [Indexify v2.4.0](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
+**Latest release:** [Indexify v2.4.1](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
 
 Download:
 
-`Indexify Setup 2.4.0.exe`
+`Indexify Setup 2.4.1.exe`
 
 > Windows may display a security warning because the application is currently not code-signed.
 
@@ -103,7 +103,7 @@ Uninstalling and reinstalling Indexify does not necessarily remove the applicati
 
 ## 📌 Status
 
-**Version:** 2.4.0
+**Version:** 2.4.1
 
 Indexify is currently a personal project and is actively being improved.
 

@@ -2,6 +2,30 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.4.1] - Expanded Subscription Brand List
+
+### Added
+- Expanded the curated subscription brand selector with a much broader selection of commonly used Indian and international services.
+- Added additional streaming services including Max, Paramount+, Hulu, Peacock, Crunchyroll, aha, Hoichoi, Sun NXT, ManoramaMAX, Lionsgate Play, Discovery+, and FanCode.
+- Added additional music and audio services including YouTube Music, JioSaavn, Gaana, Amazon Music, TIDAL, Deezer, Hungama Music, Pocket FM, and Kuku FM.
+- Added additional AI subscriptions including Google AI Pro, Google AI Ultra, Perplexity Pro, Microsoft Copilot Pro, GitHub Copilot, Midjourney, Cursor Pro, Grok, Poe, and Grammarly Pro.
+- Added additional cloud and storage services including OneDrive, Box, pCloud, MEGA, and Proton Drive.
+- Added additional productivity and software services including Todoist, Evernote, 1Password, Bitwarden Premium, QuillBot Premium, Coursera Plus, Skillshare, and MasterClass.
+- Added additional gaming services including Nintendo Switch Online, EA Play, Ubisoft+, GeForce NOW, Apple Arcade, and Google Play Pass.
+- Added additional Indian shopping and delivery memberships including Swiggy One, Zomato Gold, Zepto Pass, BB Star, and Flipkart VIP.
+- Added additional reading and book services including Kindle Unlimited, Scribd, Storytel, and Blinkist.
+- Added additional VPN and security services including NordVPN, ExpressVPN, and Proton VPN.
+- Added additional fitness and wellness services including Cult.fit, Fittr, Strava, Headspace, Calm, Fitbit Premium, and Apple Fitness+.
+
+### Compatibility
+- Existing subscription names and saved subscription data remain compatible.
+- Custom subscription names remain supported for services that are not included in the curated list.
+- No changes were made to the underlying subscription data structure.
+
+### Notes
+- This is a patch release following v2.4.0.
+- The release focuses specifically on expanding subscription brand coverage without changing existing subscription tracking functionality.
+
 ## [2.4.0] - Links, Subscription Lifecycle, Date & Calendar
 
 ### Added
