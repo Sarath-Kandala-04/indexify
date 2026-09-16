@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { Plus, Trash2, Search, X, Edit3, Calendar, CreditCard, Pause, Play, Pin, PinOff, Link2 } from 'lucide-react'
+import { Plus, Trash2, Search, X, Edit3, Calendar, CreditCard, Pause, Play, Pin, PinOff, Link2, RotateCw, Ban } from 'lucide-react'
 import { useData } from './DataContext'
 import { useToast } from './ToastContext'
 import BrandPicker from './BrandPicker'
@@ -11,6 +11,8 @@ function uid() {
 }
 
 const CATEGORIES = ['Entertainment', 'Software', 'Music', 'Gaming', 'Cloud Storage', 'Education', 'Fitness', 'News', 'Other']
+const STATUS_LABEL = { active: 'active', paused: 'paused', cancelled: 'cancelled' }
+const STATUS_COLOR = { active: 'var(--panel)', paused: 'var(--line)', cancelled: 'var(--coral)' }
 
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
@@ -23,6 +25,17 @@ function getDaysUntil(dateString) {
   today.setHours(0, 0, 0, 0)
   date.setHours(0, 0, 0, 0)
   return Math.ceil((date - today) / (1000 * 60 * 60 * 24))
+}
+function nextBillingDateAfterRenewal(currentDateStr, billingCycle) {
+  const d = new Date(currentDateStr)
+  const today = new Date()
+  // Advance by one cycle at a time until it's in the future, in case it's
+  // been overdue for a while (e.g. paused for several months then renewed).
+  while (d <= today) {
+    if (billingCycle === 'yearly') d.setFullYear(d.getFullYear() + 1)
+    else d.setMonth(d.getMonth() + 1)
+  }
+  return d.toISOString().slice(0, 10)
 }
 function emptyForm() {
   return { name: '', amount: '', billingCycle: 'monthly', nextBillingDate: '', category: 'Entertainment', status: 'active', notes: '' }
@@ -123,6 +136,19 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
     setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, status: s.status === 'active' ? 'paused' : 'active', updatedAt: Date.now() } : s)))
   }
 
+  function cancelSubscription(id) {
+    setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, status: 'cancelled', updatedAt: Date.now() } : s)))
+    showToast('Subscription marked as cancelled.')
+  }
+
+  function renewSubscription(id) {
+    const subscription = subscriptions.find((s) => s.id === id)
+    if (!subscription) return
+    const next = nextBillingDateAfterRenewal(subscription.nextBillingDate, subscription.billingCycle)
+    setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, status: 'active', nextBillingDate: next, updatedAt: Date.now() } : s)))
+    showToast(`Renewed — next billing date set to ${new Date(next).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}.`)
+  }
+
   useEffect(() => {
     if (!pendingAction || pendingAction.type !== 'highlight-subscription') return
     if (lastHandledHighlightId.current === pendingAction.id) return
@@ -184,9 +210,10 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
             <div className="grid gap-3">
               {filteredSubscriptions.map((subscription) => {
                 const days = getDaysUntil(subscription.nextBillingDate)
+                const isOverdue = days < 0 && subscription.status !== 'cancelled'
                 return (
                   <div key={subscription.id}>
-                    <div className="rounded-lg p-4 transition-colors" style={{ background: 'var(--panel-2)', border: subscription.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)', opacity: subscription.status === 'paused' ? 0.6 : 1 }}>
+                    <div className="rounded-lg p-4 transition-colors" style={{ background: 'var(--panel-2)', border: subscription.id === highlightId ? '1px solid var(--accent)' : '1px solid var(--line)', opacity: subscription.status === 'paused' || subscription.status === 'cancelled' ? 0.6 : 1 }}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex min-w-0 items-start gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md" style={{ background: 'var(--panel)', border: '1px solid var(--line)' }}>
@@ -196,7 +223,9 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                             <button onClick={() => setExpandedId(expandedId === subscription.id ? null : subscription.id)} className="flex items-center gap-2 text-left">
                               {subscription.isPinned && <Pin size={12} color="var(--accent)" />}
                               <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--text)' }}>{subscription.name}</h3>
-                              <span className="rounded px-2 py-0.5 text-[10px]" style={{ background: subscription.status === 'active' ? 'var(--panel)' : 'var(--line)', color: 'var(--text-dim)' }}>{subscription.status}</span>
+                              <span className="rounded px-2 py-0.5 text-[10px]" style={{ background: STATUS_COLOR[subscription.status], color: subscription.status === 'cancelled' ? '#fff' : 'var(--text-dim)' }}>
+                                {STATUS_LABEL[subscription.status]}
+                              </span>
                               {(subscription.links || []).length > 0 && <Link2 size={11} color="var(--accent)" />}
                             </button>
                             <div className="mt-1 text-xs" style={{ color: 'var(--text-dim)' }}>{subscription.category}</div>
@@ -213,20 +242,31 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                           <span className="truncate text-xs" style={{ color: 'var(--text-dim)' }}>
                             Next payment: {new Date(subscription.nextBillingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
-                          <span className="shrink-0 text-xs" style={{ color: days <= 3 ? 'var(--coral)' : 'var(--text-dim)' }}>
-                            {days < 0 ? 'Overdue' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`}
-                          </span>
+                          {subscription.status !== 'cancelled' && (
+                            <span className="shrink-0 text-xs" style={{ color: days <= 3 ? 'var(--coral)' : 'var(--text-dim)' }}>
+                              {days < 0 ? 'Overdue' : days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`}
+                            </span>
+                          )}
                         </div>
                         <div className="ml-3 flex shrink-0 items-center gap-1">
+                          {isOverdue && (
+                            <button onClick={() => renewSubscription(subscription.id)} className="rounded-md p-2" title="Renew (move to next billing date)" style={{ color: 'var(--accent)' }}>
+                              <RotateCw size={14} />
+                            </button>
+                          )}
+                          {subscription.status !== 'cancelled' && (
+                            <button onClick={() => cancelSubscription(subscription.id)} className="rounded-md p-2" title="Mark as Cancelled" style={{ color: 'var(--text-dim)' }}>
+                              <Ban size={14} />
+                            </button>
+                          )}
                           <button onClick={() => setLinkPickerFor(subscription.id)} className="rounded-md p-2" title="Link items" style={{ color: (subscription.links || []).length > 0 ? 'var(--accent)' : 'var(--text-dim)' }}>
                             <Link2 size={14} />
                           </button>
-                          <button onClick={() => togglePin(subscription.id)} className="rounded-md p-2 transition-colors" title={subscription.isPinned ? 'Unpin' : 'Pin'} style={{ color: subscription.isPinned ? 'var(--accent)' : 'var(--text-dim)' }}>
-                            {subscription.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
-                          </button>
-                          <button onClick={() => toggleStatus(subscription.id)} className="rounded-md p-2 transition-colors" title={subscription.status === 'active' ? 'Pause' : 'Resume'} style={{ color: 'var(--text-dim)' }}>
-                            {subscription.status === 'active' ? <Pause size={14} /> : <Play size={14} />}
-                          </button>
+                          {subscription.status !== 'cancelled' && (
+                            <button onClick={() => toggleStatus(subscription.id)} className="rounded-md p-2 transition-colors" title={subscription.status === 'active' ? 'Pause' : 'Resume'} style={{ color: 'var(--text-dim)' }}>
+                              {subscription.status === 'active' ? <Pause size={14} /> : <Play size={14} />}
+                            </button>
+                          )}
                           <button onClick={() => openEditForm(subscription)} className="rounded-md p-2" title="Edit" style={{ color: 'var(--text-dim)' }}>
                             <Edit3 size={14} />
                           </button>
@@ -292,6 +332,7 @@ export default function SubscriptionsPanel({ pendingAction, goTo }) {
                 <select name="status" value={form.status} onChange={handleChange} className="w-full rounded-md px-3 py-2 text-sm outline-none" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
                   <option value="active">Active</option>
                   <option value="paused">Paused</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
               <div>

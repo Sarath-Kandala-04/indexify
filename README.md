@@ -16,16 +16,19 @@ Indexify is a desktop application built with React and Electron, designed to man
 - 💾 **Local storage** — Your data is stored locally on your computer.
 - 🖥️ **Desktop app** — Built for Windows using Electron.
 - 🎨 **Clean interface** — Modern, minimal UI with custom Indexify branding.
+- 🔗 **Smart links** — URLs in notes render as clickable links; YouTube links show an inline preview.
+- 📅 **Home calendar** — a quick-glance month calendar on the Home screen.
+
 
 ## 📥 Download
 
 The latest Windows installer is available from the GitHub Releases page.
 
-**Latest release:** [Indexify v2.3.1](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
+**Latest release:** [Indexify v2.4.0](https://github.com/Sarath-Kandala-04/indexify/releases/latest)
 
 Download:
 
-`Indexify Setup 2.3.1.exe`
+`Indexify Setup 2.4.0.exe`
 
 > Windows may display a security warning because the application is currently not code-signed.
 
@@ -100,7 +103,7 @@ Uninstalling and reinstalling Indexify does not necessarily remove the applicati
 
 ## 📌 Status
 
-**Version:** 2.3.1
+**Version:** 2.4.0
 
 Indexify is currently a personal project and is actively being improved.
 

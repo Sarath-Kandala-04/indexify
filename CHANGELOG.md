@@ -2,6 +2,18 @@
 
 All notable changes to Indexify are documented here. Versions follow the roadmap: one isolated feature per version.
 
+## [2.4.0] - Links, Subscription Lifecycle, Date & Calendar
+
+### Added
+- Pasted or typed URLs inside notes now render as real clickable links; YouTube links specifically render an inline video preview alongside the link (click the block to edit its raw text again).
+- New **Cancelled** status for Subscriptions, distinct from Paused, with its own visual indicator.
+- **Renew** action on overdue subscriptions — advances the next billing date forward (correctly handling multiple missed cycles) and reactivates the subscription in one click.
+- Day-of-week + date display (e.g. "Wednesday · September 16") alongside the clock, system-synced and updating live, shown on Home and in the top-right corner throughout the app.
+- A compact calendar on the right side of Home, with month navigation and today highlighted.
+
+### Notes
+- Note blocks are plain-text while focused/being edited (so URLs and slash commands can be typed normally) and switch to a rendered view with clickable links/embeds once you click away — click again to resume editing.
+
 ## [2.3.1] - Notes Editor & Theme Fixes
 
 ### Fixed

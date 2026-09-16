@@ -8,5 +8,4 @@ links: [{"type":"subscription","id":"mtrjw5bpkx0b0"}]
 
 This note is regarding my bus travel from Gandhi Nagar to Ujjain and Omkareshwar.
 
-
 ---

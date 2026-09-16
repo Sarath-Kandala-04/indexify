@@ -6,6 +6,8 @@ import { ensureBlocks, blocksToPlainText, newBlock } from './noteBlocks'
 import SlashMenu from './SlashMenu'
 import LinkPicker from './LinkPicker'
 import LinkedItems from './LinkedItems'
+import LinkText from './LinkText'
+import { extractUrls } from './urlUtils'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
@@ -44,6 +46,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
   const [slashMenu, setSlashMenu] = useState(null)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [draggedId, setDraggedId] = useState(null)
+  const [editingBlockId, setEditingBlockId] = useState(null)
 
   const titleInputRef = useRef(null)
   const blockRefs = useRef({})
@@ -59,16 +62,16 @@ export default function NotesPanel({ pendingAction, goTo }) {
   const activeRaw = notes.find((n) => n.id === activeId) || null
   const active = activeRaw ? { ...activeRaw, blocks: ensureBlocks(activeRaw), links: activeRaw.links || [] } : null
 
-  // Auto-grow every block textarea whenever the active note's blocks change.
   useEffect(() => {
     if (!active) return
     active.blocks.forEach((b) => resizeTextarea(blockRefs.current[b.id]))
-  }, [active?.blocks])
+  }, [active?.blocks, editingBlockId])
 
   function createNote() {
     const note = { id: uid(), title: 'Untitled note', body: '', blocks: [newBlock('paragraph', '')], updatedAt: Date.now(), isPinned: false, links: [] }
     setNotes([note, ...notes])
     setActiveId(note.id)
+    setEditingBlockId(note.blocks[0].id)
     requestAnimationFrame(() => titleInputRef.current?.focus())
   }
 
@@ -111,19 +114,10 @@ export default function NotesPanel({ pendingAction, goTo }) {
     persistBlocks(active.id, blocks)
   }
 
-  function addBlockAfter(blockId, focusNew = true) {
-    const idx = active.blocks.findIndex((b) => b.id === blockId)
-    const fresh = newBlock('paragraph', '')
-    const blocks = [...active.blocks]
-    blocks.splice(idx + 1, 0, fresh)
-    persistBlocks(active.id, blocks)
-    if (focusNew) requestAnimationFrame(() => blockRefs.current[fresh.id]?.focus())
-    return fresh
-  }
-
   function addBlockAtEnd() {
     const fresh = newBlock('paragraph', '')
     persistBlocks(active.id, [...active.blocks, fresh])
+    setEditingBlockId(fresh.id)
     requestAnimationFrame(() => blockRefs.current[fresh.id]?.focus())
   }
 
@@ -146,7 +140,7 @@ export default function NotesPanel({ pendingAction, goTo }) {
   async function handlePasteOnBlock(e, blockId) {
     const items = Array.from(e.clipboardData?.items || [])
     const fileItem = items.find((i) => i.kind === 'file')
-    if (!fileItem) return // plain text paste — let default behavior happen
+    if (!fileItem) return
 
     e.preventDefault()
     const file = fileItem.getAsFile()
@@ -276,74 +270,87 @@ export default function NotesPanel({ pendingAction, goTo }) {
               <input ref={titleInputRef} value={active.title} onChange={(e) => updateTitle(active.id, e.target.value)} placeholder="Untitled note" className="font-display text-3xl bg-transparent outline-none mb-1" style={{ color: 'var(--text)' }} />
               <LinkedItems type="note" id={active.id} links={active.links} goTo={goTo} />
 
-              {active.blocks.map((block) => (
-                <div
-                  key={block.id}
-                  className="group flex items-start gap-2 mt-2 rounded"
-                  style={{ background: draggedId === block.id ? 'var(--panel-2)' : 'transparent' }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => { reorderBlocks(draggedId, block.id); setDraggedId(null) }}
-                >
-                  <span
-                    draggable
-                    onDragStart={() => setDraggedId(block.id)}
-                    onDragEnd={() => setDraggedId(null)}
-                    className="cursor-grab opacity-0 group-hover:opacity-40 mt-1.5 shrink-0"
-                  >
-                    <GripVertical size={14} color="var(--text-dim)" />
-                  </span>
+              {active.blocks.map((block) => {
+                const hasUrl = block.type === 'paragraph' && extractUrls(block.text || '').length > 0
+                const isEditing = editingBlockId === block.id
 
-                  {block.type === 'divider' ? (
-                    <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
-                  ) : block.type === 'image' ? (
-                    <img src={fileUrl(folderPath, block.text)} alt="" className="max-w-full rounded-md" style={{ border: '1px solid var(--line)' }} />
-                  ) : block.type === 'file' ? (
-                    (() => {
-                      const ext = (block.text.split('.').pop() || '').toLowerCase()
-                      if (AUDIO_EXT.includes(ext)) return <audio controls src={fileUrl(folderPath, block.text)} className="flex-1" />
-                      if (VIDEO_EXT.includes(ext)) return <video controls src={fileUrl(folderPath, block.text)} className="max-w-full rounded-md" />
-                      return (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-md text-sm" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
-                          <FileIcon size={14} color="var(--accent)" /> {block.fileName || block.text}
-                        </div>
-                      )
-                    })()
-                  ) : (
-                    <>
-                      {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
-                      {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
-                      {block.type === 'todo' && <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />}
-                      <textarea
-                        ref={(el) => { blockRefs.current[block.id] = el; resizeTextarea(el) }}
-                        value={block.text}
-                        onChange={(e) => updateBlockText(block.id, e.target.value, e.target)}
-                        onPaste={(e) => handlePasteOnBlock(e, block.id)}
-                        onKeyDown={(e) => {
-                          if (slashMenu?.blockId === block.id) return
-                          if (e.key === 'Enter' && e.shiftKey) {
-                            return // let the newline insert normally, stay in this block
-                          }
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            e.target.blur() // Enter commits/exits — no new block, no newline
-                          } else if (e.key === 'Backspace' && block.text === '') {
-                            e.preventDefault()
-                            removeBlock(block.id)
-                          }
-                        }}
-                        placeholder={block.type === 'paragraph' ? "Type, paste an image/file, or '/' for commands..." : ''}
-                        rows={1}
-                        className={`flex-1 bg-transparent outline-none resize-none overflow-hidden ${BLOCK_STYLE[block.type]}`}
-                        style={{
-                          color: block.type === 'quote' ? 'var(--text-dim)' : 'var(--text)',
-                          borderColor: block.type === 'quote' ? 'var(--accent)' : undefined,
-                          textDecoration: block.type === 'todo' && block.checked ? 'line-through' : 'none',
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-              ))}
+                return (
+                  <div
+                    key={block.id}
+                    className="group flex items-start gap-2 mt-2 rounded"
+                    style={{ background: draggedId === block.id ? 'var(--panel-2)' : 'transparent' }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => { reorderBlocks(draggedId, block.id); setDraggedId(null) }}
+                  >
+                    <span
+                      draggable
+                      onDragStart={() => setDraggedId(block.id)}
+                      onDragEnd={() => setDraggedId(null)}
+                      className="cursor-grab opacity-0 group-hover:opacity-40 mt-1.5 shrink-0"
+                    >
+                      <GripVertical size={14} color="var(--text-dim)" />
+                    </span>
+
+                    {block.type === 'divider' ? (
+                      <hr className="flex-1 my-2" style={{ borderColor: 'var(--line)' }} />
+                    ) : block.type === 'image' ? (
+                      <img src={fileUrl(folderPath, block.text)} alt="" className="max-w-full rounded-md" style={{ border: '1px solid var(--line)' }} />
+                    ) : block.type === 'file' ? (
+                      (() => {
+                        const ext = (block.text.split('.').pop() || '').toLowerCase()
+                        if (AUDIO_EXT.includes(ext)) return <audio controls src={fileUrl(folderPath, block.text)} className="flex-1" />
+                        if (VIDEO_EXT.includes(ext)) return <video controls src={fileUrl(folderPath, block.text)} className="max-w-full rounded-md" />
+                        return (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-md text-sm" style={{ background: 'var(--panel-2)', border: '1px solid var(--line)', color: 'var(--text)' }}>
+                            <FileIcon size={14} color="var(--accent)" /> {block.fileName || block.text}
+                          </div>
+                        )
+                      })()
+                    ) : hasUrl && !isEditing ? (
+                      <div
+                        onClick={() => { setEditingBlockId(block.id); requestAnimationFrame(() => blockRefs.current[block.id]?.focus()) }}
+                        className={`flex-1 cursor-text ${BLOCK_STYLE[block.type]}`}
+                        style={{ color: 'var(--text)' }}
+                      >
+                        <LinkText text={block.text} />
+                      </div>
+                    ) : (
+                      <>
+                        {block.type === 'bulleted' && <span style={{ color: 'var(--text-dim)' }}>•</span>}
+                        {block.type === 'numbered' && <span style={{ color: 'var(--text-dim)' }}>#.</span>}
+                        {block.type === 'todo' && <input type="checkbox" checked={!!block.checked} onChange={() => toggleTodoBlock(block.id)} className="mt-1.5" />}
+                        <textarea
+                          ref={(el) => { blockRefs.current[block.id] = el; resizeTextarea(el) }}
+                          value={block.text}
+                          onChange={(e) => updateBlockText(block.id, e.target.value, e.target)}
+                          onPaste={(e) => handlePasteOnBlock(e, block.id)}
+                          onFocus={() => setEditingBlockId(block.id)}
+                          onBlur={() => setEditingBlockId((cur) => (cur === block.id ? null : cur))}
+                          onKeyDown={(e) => {
+                            if (slashMenu?.blockId === block.id) return
+                            if (e.key === 'Enter' && e.shiftKey) return
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              e.target.blur()
+                            } else if (e.key === 'Backspace' && block.text === '') {
+                              e.preventDefault()
+                              removeBlock(block.id)
+                            }
+                          }}
+                          placeholder={block.type === 'paragraph' ? "Type, paste a link/image/file, or '/' for commands..." : ''}
+                          rows={1}
+                          className={`flex-1 bg-transparent outline-none resize-none overflow-hidden ${BLOCK_STYLE[block.type]}`}
+                          style={{
+                            color: block.type === 'quote' ? 'var(--text-dim)' : 'var(--text)',
+                            borderColor: block.type === 'quote' ? 'var(--accent)' : undefined,
+                            textDecoration: block.type === 'todo' && block.checked ? 'line-through' : 'none',
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
+                )
+              })}
 
               <button
                 onClick={addBlockAtEnd}
