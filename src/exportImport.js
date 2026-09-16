@@ -53,7 +53,7 @@ export async function importFromZipFile(file) {
   const subscriptions = await readCsv('subscriptions.csv', SUBSCRIPTION_JSON_FIELDS)
 
   let deletedItems = []
-  const metaEntry = zip.file('.indexify-meta.json')
+    const metaEntry = zip.file('.indexify-meta.json')
   if (metaEntry) {
     try {
       const metaRaw = await metaEntry.async('string')
